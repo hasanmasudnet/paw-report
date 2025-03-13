@@ -11,6 +11,7 @@ export interface Affiliate {
   currency: string; // USD, EUR, GBP, CAD, AUD
   subAffiliates: SubAffiliate[];
   affiliate?: string; // Affiliate company name
+  lastUpdated?: string; // Date of last update
 }
 
 export interface SubAffiliate {
@@ -25,6 +26,7 @@ export interface SubAffiliate {
   cpaCommission: number;
   profit: number;
   currency: string;
+  lastUpdated?: string; // Date of last update
 }
 
 export interface FilterOptions {
@@ -34,6 +36,8 @@ export interface FilterOptions {
   affiliateUsername: string;
   subAffiliateUsername: string;
   affiliate?: string;
+  year?: string;
+  month?: string;
 }
 
 export interface DealTypeMetrics {

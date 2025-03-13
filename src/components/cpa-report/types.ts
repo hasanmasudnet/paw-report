@@ -12,6 +12,9 @@ export interface CPAReportFilterOptions {
   brand: string;
   trackerId: string;
   username: string;
+  affiliate?: string;
+  year?: string;
+  month?: string;
   startDate?: string;
   endDate?: string;
 }

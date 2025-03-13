@@ -17,8 +17,8 @@ export interface RevenueShareFilterOptions {
   trackerId: string;
   username: string;
   affiliate: string;
+  year?: string;
+  month?: string;
   startDate?: string;
   endDate?: string;
-  minSharePercentage?: number;
-  maxSharePercentage?: number;
 }

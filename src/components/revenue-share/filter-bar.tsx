@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { RevenueShareFilterOptions } from "./types";
 import {
   Box,
@@ -12,18 +12,9 @@ import {
   Grid,
   TextField,
   InputAdornment,
-  Slider,
-  Tooltip,
   Autocomplete,
-  Collapse,
 } from "@mui/material";
-import {
-  FilterAlt,
-  RestartAlt,
-  Search,
-  Info,
-  DateRange,
-} from "@mui/icons-material";
+import { FilterAlt, RestartAlt, Search } from "@mui/icons-material";
 
 interface FilterBarProps {
   brands: string[];
@@ -33,6 +24,8 @@ interface FilterBarProps {
   filters: RevenueShareFilterOptions;
   onFilterChange: (filters: RevenueShareFilterOptions) => void;
   onResetFilters: () => void;
+  years?: string[];
+  months?: { value: string; label: string }[];
 }
 
 export function FilterBar({
@@ -43,12 +36,9 @@ export function FilterBar({
   filters,
   onFilterChange,
   onResetFilters,
+  years = [],
+  months = [],
 }: FilterBarProps) {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [sharePercentageRange, setSharePercentageRange] = useState<
-    [number, number]
-  >([10, 40]);
-
   const handleBrandChange = (e: React.ChangeEvent<{ value: unknown }>) => {
     onFilterChange({
       ...filters,
@@ -70,39 +60,6 @@ export function FilterBar({
     });
   };
 
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({
-      ...filters,
-      startDate: e.target.value,
-    });
-  };
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({
-      ...filters,
-      endDate: e.target.value,
-    });
-  };
-
-  const handleSharePercentageRangeChange = (
-    event: Event,
-    newValue: number | number[],
-  ) => {
-    setSharePercentageRange(newValue as [number, number]);
-  };
-
-  const handleSharePercentageRangeChangeCommitted = (
-    event: Event | React.SyntheticEvent,
-    newValue: number | number[],
-  ) => {
-    const [min, max] = newValue as [number, number];
-    onFilterChange({
-      ...filters,
-      minSharePercentage: min,
-      maxSharePercentage: max === 40 ? undefined : max,
-    });
-  };
-
   return (
     <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
       <Grid container spacing={2}>
@@ -120,20 +77,62 @@ export function FilterBar({
                 Filter Revenue Share
               </Typography>
             </Box>
-            <Button
-              size="small"
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            >
-              {showAdvancedFilters
-                ? "Hide Advanced Filters"
-                : "Show Advanced Filters"}
-            </Button>
           </Box>
         </Grid>
 
         {/* All search boxes in one row */}
         <Grid item xs={12}>
           <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="year-select-label">Year</InputLabel>
+              <Select
+                labelId="year-select-label"
+                id="year-select"
+                value={filters.year || ""}
+                label="Year"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    year: e.target.value as string,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Years</em>
+                </MenuItem>
+                {years.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="month-select-label">Month</InputLabel>
+              <Select
+                labelId="month-select-label"
+                id="month-select"
+                value={filters.month || ""}
+                label="Month"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    month: e.target.value as string,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Months</em>
+                </MenuItem>
+                {months.map((month) => (
+                  <MenuItem key={month.value} value={month.value}>
+                    {month.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <Autocomplete
               id="brand-select"
               options={brands}
@@ -254,32 +253,6 @@ export function FilterBar({
               clearOnBlur
               handleHomeEndKeys
             />
-
-            <TextField
-              size="small"
-              label="Start Date"
-              type="date"
-              value={filters.startDate || ""}
-              onChange={handleStartDateChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <DateRange fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-              InputLabelProps={{ shrink: true }}
-              sx={{ flex: 1, minWidth: 180 }}
-            />
-            <TextField
-              size="small"
-              label="End Date"
-              type="date"
-              value={filters.endDate || ""}
-              onChange={handleEndDateChange}
-              InputLabelProps={{ shrink: true }}
-              sx={{ flex: 1, minWidth: 180 }}
-            />
           </Box>
         </Grid>
 
@@ -296,57 +269,6 @@ export function FilterBar({
           >
             Reset Filters
           </Button>
-        </Grid>
-
-        {/* Advanced filters */}
-        <Grid item xs={12}>
-          <Collapse in={showAdvancedFilters}>
-            <Box
-              sx={{ mt: 1, p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}
-            >
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      Share Percentage Range
-                    </Typography>
-                    <Tooltip title="Filter by revenue share percentage">
-                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                    </Tooltip>
-                  </Box>
-                  <Box sx={{ px: 2 }}>
-                    <Slider
-                      value={sharePercentageRange}
-                      onChange={handleSharePercentageRangeChange}
-                      onChangeCommitted={
-                        handleSharePercentageRangeChangeCommitted
-                      }
-                      valueLabelDisplay="auto"
-                      min={10}
-                      max={40}
-                      step={1}
-                      valueLabelFormat={(value) => `${value}%`}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        {sharePercentageRange[0]}%
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {sharePercentageRange[1]}%
-                        {sharePercentageRange[1] === 40 ? "+" : ""}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </Collapse>
         </Grid>
       </Grid>
     </Paper>

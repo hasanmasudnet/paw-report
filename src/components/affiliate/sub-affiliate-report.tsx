@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  mockAffiliates,
-  brands,
-  categories,
-  dealTypes,
-  affiliateCompanies,
-} from "./mock-data";
+import { mockAffiliates, brands, dealTypes, years, months } from "./mock-data";
 import { Affiliate, SubAffiliate, FilterOptions } from "./types";
 import { FilterBar } from "./filter-bar";
 import {
@@ -45,7 +39,6 @@ function SubAffiliateReport() {
   const extractSubAffiliates = () => {
     const allSubAffiliates: (SubAffiliate & {
       parentUsername: string;
-      parentAffiliate: string;
     })[] = [];
 
     mockAffiliates.forEach((affiliate) => {
@@ -54,7 +47,6 @@ function SubAffiliateReport() {
           allSubAffiliates.push({
             ...sub,
             parentUsername: affiliate.username,
-            parentAffiliate: affiliate.affiliate || "N/A",
           });
         });
       }
@@ -73,11 +65,11 @@ function SubAffiliateReport() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState<FilterOptions>({
     brand: "",
-    category: "",
     dealType: "",
     affiliateUsername: "",
     subAffiliateUsername: "",
-    affiliate: "",
+    year: "",
+    month: "",
   });
 
   // Apply filters whenever filters state changes
@@ -85,11 +77,6 @@ function SubAffiliateReport() {
     let filtered = subAffiliates.filter((subAffiliate) => {
       // Filter by brand
       if (filters.brand && subAffiliate.brand !== filters.brand) {
-        return false;
-      }
-
-      // Filter by category
-      if (filters.category && subAffiliate.category !== filters.category) {
         return false;
       }
 
@@ -118,10 +105,20 @@ function SubAffiliateReport() {
         return false;
       }
 
-      // Filter by affiliate company
+      // Filter by year
       if (
-        filters.affiliate &&
-        subAffiliate.parentAffiliate !== filters.affiliate
+        filters.year &&
+        new Date(subAffiliate.lastUpdated).getFullYear().toString() !==
+          filters.year
+      ) {
+        return false;
+      }
+
+      // Filter by month
+      if (
+        filters.month &&
+        new Date(subAffiliate.lastUpdated).getMonth().toString() !==
+          filters.month
       ) {
         return false;
       }
@@ -139,11 +136,11 @@ function SubAffiliateReport() {
   const handleResetFilters = () => {
     setFilters({
       brand: "",
-      category: "",
       dealType: "",
       affiliateUsername: "",
       subAffiliateUsername: "",
-      affiliate: "",
+      year: "",
+      month: "",
     });
   };
 
@@ -250,9 +247,7 @@ function SubAffiliateReport() {
       case "profit":
         comparison = a.profit - b.profit;
         break;
-      case "parentAffiliate":
-        comparison = a.parentAffiliate.localeCompare(b.parentAffiliate);
-        break;
+
       default:
         comparison = 0;
     }
@@ -383,9 +378,9 @@ function SubAffiliateReport() {
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
-          categories={categories}
           dealTypes={dealTypes}
-          affiliateCompanies={affiliateCompanies}
+          years={years}
+          months={months}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
@@ -507,9 +502,8 @@ function SubAffiliateReport() {
                   (subAffiliate) => ({
                     parentUsername: subAffiliate.parentUsername,
                     username: subAffiliate.username,
-                    parentAffiliate: subAffiliate.parentAffiliate,
                     brand: subAffiliate.brand,
-                    category: subAffiliate.category,
+
                     dealType: subAffiliate.dealType,
                     grossRevenue: subAffiliate.grossRevenue,
                     commission: subAffiliate.commission,
@@ -580,26 +574,7 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell
-                    onClick={() => handleSort("parentAffiliate")}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      Affiliate Company
-                      {sortField === "parentAffiliate" && (
-                        <TrendingUp
-                          fontSize="small"
-                          sx={{
-                            ml: 0.5,
-                            transform:
-                              sortDirection === "desc"
-                                ? "rotate(0deg)"
-                                : "rotate(180deg)",
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
+
                   <TableCell
                     onClick={() => handleSort("brand")}
                     sx={{ cursor: "pointer" }}
@@ -620,26 +595,7 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell
-                    onClick={() => handleSort("category")}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      Category
-                      {sortField === "category" && (
-                        <TrendingUp
-                          fontSize="small"
-                          sx={{
-                            ml: 0.5,
-                            transform:
-                              sortDirection === "desc"
-                                ? "rotate(0deg)"
-                                : "rotate(180deg)",
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
+
                   <TableCell
                     onClick={() => handleSort("dealType")}
                     sx={{ cursor: "pointer" }}
@@ -747,7 +703,7 @@ function SubAffiliateReport() {
               <TableBody>
                 {paginatedSubAffiliates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
                         No sub-affiliates found.
                       </Typography>
@@ -764,13 +720,9 @@ function SubAffiliateReport() {
                       <TableCell>
                         <Typography>{subAffiliate.username}</Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography color="primary.main" fontWeight="medium">
-                          {subAffiliate.parentAffiliate}
-                        </Typography>
-                      </TableCell>
+
                       <TableCell>{subAffiliate.brand}</TableCell>
-                      <TableCell>{subAffiliate.category}</TableCell>
+
                       <TableCell>
                         <Chip
                           label={subAffiliate.dealType}

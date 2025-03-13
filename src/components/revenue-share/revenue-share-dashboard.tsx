@@ -5,6 +5,8 @@ import {
   trackerIds,
   usernames,
   affiliateNames,
+  years,
+  months,
 } from "./mock-data";
 import { RevenueShareItem, RevenueShareFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
@@ -31,6 +33,8 @@ function RevenueShareDashboard() {
     trackerId: "",
     username: "",
     affiliate: "",
+    year: "",
+    month: "",
   });
 
   // Apply filters whenever filters state changes
@@ -59,12 +63,18 @@ function RevenueShareDashboard() {
         return false;
       }
 
-      // Filter by share percentage range
+      // Filter by year
       if (
-        (filters.minSharePercentage !== undefined &&
-          item.sharePercentage < filters.minSharePercentage) ||
-        (filters.maxSharePercentage !== undefined &&
-          item.sharePercentage > filters.maxSharePercentage)
+        filters.year &&
+        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
+      ) {
+        return false;
+      }
+
+      // Filter by month
+      if (
+        filters.month &&
+        new Date(item.lastUpdated).getMonth().toString() !== filters.month
       ) {
         return false;
       }
@@ -94,6 +104,8 @@ function RevenueShareDashboard() {
       trackerId: "",
       username: "",
       affiliate: "",
+      year: "",
+      month: "",
     });
   };
 
@@ -116,6 +128,8 @@ function RevenueShareDashboard() {
           trackerIds={trackerIds}
           usernames={usernames}
           affiliateNames={affiliateNames}
+          years={years}
+          months={months}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}

@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { mockTrafficReportItems, brands, trackerIds } from "./mock-data";
+import {
+  mockTrafficReportItems,
+  brands,
+  trackerIds,
+  years,
+  months,
+} from "./mock-data";
 import { TrafficReportItem, TrafficReportFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
@@ -25,6 +31,8 @@ function TrafficReportDashboard() {
   const [filters, setFilters] = useState<TrafficReportFilterOptions>({
     brand: "",
     trackerId: "",
+    year: "",
+    month: "",
   });
 
   // Apply filters whenever filters state changes
@@ -40,30 +48,20 @@ function TrafficReportDashboard() {
         return false;
       }
 
-      // Filter by impressions range
+      // Range filters removed
+
+      // Filter by year
       if (
-        (filters.minImpressions !== undefined &&
-          item.impressions < filters.minImpressions) ||
-        (filters.maxImpressions !== undefined &&
-          item.impressions > filters.maxImpressions)
+        filters.year &&
+        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
       ) {
         return false;
       }
 
-      // Filter by clicks range
+      // Filter by month
       if (
-        (filters.minClicks !== undefined && item.clicks < filters.minClicks) ||
-        (filters.maxClicks !== undefined && item.clicks > filters.maxClicks)
-      ) {
-        return false;
-      }
-
-      // Filter by deposits range
-      if (
-        (filters.minDeposits !== undefined &&
-          item.newDeposits < filters.minDeposits) ||
-        (filters.maxDeposits !== undefined &&
-          item.newDeposits > filters.maxDeposits)
+        filters.month &&
+        new Date(item.lastUpdated).getMonth().toString() !== filters.month
       ) {
         return false;
       }
@@ -91,6 +89,8 @@ function TrafficReportDashboard() {
     setFilters({
       brand: "",
       trackerId: "",
+      year: "",
+      month: "",
     });
   };
 
@@ -111,6 +111,8 @@ function TrafficReportDashboard() {
         <FilterBar
           brands={brands}
           trackerIds={trackerIds}
+          years={years}
+          months={months}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}

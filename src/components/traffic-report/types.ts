@@ -13,12 +13,8 @@ export interface TrafficReportItem {
 export interface TrafficReportFilterOptions {
   brand: string;
   trackerId: string;
-  minImpressions?: number;
-  maxImpressions?: number;
-  minClicks?: number;
-  maxClicks?: number;
-  minDeposits?: number;
-  maxDeposits?: number;
+  year?: string;
+  month?: string;
   startDate?: string;
   endDate?: string;
 }

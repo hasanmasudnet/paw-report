@@ -22,9 +22,10 @@ import { FilterAlt, RestartAlt, Search, Info } from "@mui/icons-material";
 
 interface FilterBarProps {
   brands: string[];
-  categories: string[];
   dealTypes: string[];
   affiliateCompanies: string[];
+  years?: string[];
+  months?: { value: string; label: string }[];
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
   onResetFilters: () => void;
@@ -32,9 +33,10 @@ interface FilterBarProps {
 
 export function FilterBar({
   brands,
-  categories,
   dealTypes,
   affiliateCompanies,
+  years = [],
+  months = [],
   filters,
   onFilterChange,
   onResetFilters,
@@ -97,6 +99,56 @@ export function FilterBar({
         {/* All search boxes in one row */}
         <Grid item xs={12}>
           <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="year-select-label">Year</InputLabel>
+              <Select
+                labelId="year-select-label"
+                id="year-select"
+                value={filters.year || ""}
+                label="Year"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    year: e.target.value as string,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Years</em>
+                </MenuItem>
+                {years.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="month-select-label">Month</InputLabel>
+              <Select
+                labelId="month-select-label"
+                id="month-select"
+                value={filters.month || ""}
+                label="Month"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    month: e.target.value as string,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Months</em>
+                </MenuItem>
+                {months.map((month) => (
+                  <MenuItem key={month.value} value={month.value}>
+                    {month.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <Autocomplete
               id="brand-select"
               options={brands}
@@ -131,31 +183,6 @@ export function FilterBar({
               clearOnBlur
               handleHomeEndKeys
             />
-
-            <FormControl size="small" sx={{ flex: 1, minWidth: 180 }}>
-              <InputLabel id="category-select-label">Category</InputLabel>
-              <Select
-                labelId="category-select-label"
-                id="category-select"
-                value={filters.category}
-                label="Category"
-                onChange={(e) =>
-                  onFilterChange({
-                    ...filters,
-                    category: e.target.value,
-                  })
-                }
-              >
-                <MenuItem value="">
-                  <em>All Categories</em>
-                </MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
             <FormControl size="small" sx={{ flex: 1, minWidth: 180 }}>
               <InputLabel id="deal-type-select-label">Deal Type</InputLabel>
@@ -235,41 +262,6 @@ export function FilterBar({
               }}
               placeholder="Search sub-affiliates..."
               sx={{ flex: 1, minWidth: 180 }}
-            />
-
-            <Autocomplete
-              id="affiliate-select"
-              options={affiliateCompanies}
-              value={filters.affiliate || null}
-              onChange={(event, newValue) => {
-                onFilterChange({
-                  ...filters,
-                  affiliate: newValue || "",
-                });
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Affiliate Company"
-                  size="small"
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <>
-                        <InputAdornment position="start">
-                          <Search fontSize="small" />
-                        </InputAdornment>
-                        {params.InputProps.startAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              sx={{ flex: 1, minWidth: 180 }}
-              freeSolo
-              selectOnFocus
-              clearOnBlur
-              handleHomeEndKeys
             />
           </Box>
         </Grid>

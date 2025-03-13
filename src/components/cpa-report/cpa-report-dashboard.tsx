@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { mockCPAReportItems, brands, trackerIds, usernames } from "./mock-data";
+import {
+  mockCPAReportItems,
+  brands,
+  trackerIds,
+  usernames,
+  years,
+  months,
+} from "./mock-data";
 import { CPAReportItem, CPAReportFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
@@ -23,6 +30,9 @@ function CPAReportDashboard() {
     brand: "",
     trackerId: "",
     username: "",
+    affiliate: "",
+    year: "",
+    month: "",
   });
 
   // Apply filters whenever filters state changes
@@ -40,6 +50,30 @@ function CPAReportDashboard() {
 
       // Filter by username
       if (filters.username && item.username !== filters.username) {
+        return false;
+      }
+
+      // Filter by affiliate
+      if (filters.affiliate) {
+        // Note: Since the CPAReportItem doesn't have an affiliate field in the current model,
+        // we would need to add this field to the model or create a mapping.
+        // For now, we'll skip this filter since it's not in the data model
+        // This would be implemented when the data model is updated
+      }
+
+      // Filter by year
+      if (
+        filters.year &&
+        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
+      ) {
+        return false;
+      }
+
+      // Filter by month
+      if (
+        filters.month &&
+        new Date(item.lastUpdated).getMonth().toString() !== filters.month
+      ) {
         return false;
       }
 
@@ -67,6 +101,9 @@ function CPAReportDashboard() {
       brand: "",
       trackerId: "",
       username: "",
+      affiliate: "",
+      year: "",
+      month: "",
     });
   };
 
@@ -88,6 +125,8 @@ function CPAReportDashboard() {
           brands={brands}
           trackerIds={trackerIds}
           usernames={usernames}
+          years={years}
+          months={months}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
