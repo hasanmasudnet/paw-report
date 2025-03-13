@@ -1,43 +1,30 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { TrafficReportItem } from "./types";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
-  Box,
-  Chip,
   TablePagination,
+  Paper,
+  Chip,
+  Typography,
   LinearProgress,
-  Tooltip,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { TrendingUp, TrendingDown } from "@mui/icons-material";
 
 interface TrafficReportTableProps {
   items: TrafficReportItem[];
 }
 
-type SortField =
-  | "brand"
-  | "trackerId"
-  | "impressions"
-  | "clicks"
-  | "newDeposits"
-  | "ctr"
-  | "conversionRate"
-  | "lastUpdated";
-
-type SortDirection = "asc" | "desc";
-
 export function TrafficReportTable({ items }: TrafficReportTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<SortField>("lastUpdated");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<string>("impressions");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -50,7 +37,7 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
     setPage(0);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -59,104 +46,76 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
+  // Format large numbers
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat("en-US").format(value);
   };
 
-  const getPerformanceColor = (value: number, max: number) => {
-    const percentage = (value / max) * 100;
-    if (percentage > 70) return "success.main";
-    if (percentage < 30) return "error.main";
-    return "primary.main";
+  // Format percentage
+  const formatPercentage = (value: number | undefined) => {
+    if (value === undefined) return "0.00%";
+    return value.toFixed(2) + "%";
   };
 
-  const getCTRColor = (ctr: number) => {
-    if (ctr > 5) return "success.main";
-    if (ctr < 1) return "error.main";
-    return "primary.main";
+  // Get color based on performance
+  const getPerformanceColor = (value: number, type: string) => {
+    if (type === "ctr") {
+      if (value > 5) return "success.main";
+      if (value < 1) return "error.main";
+      return "text.primary";
+    } else if (type === "conversionRate") {
+      if (value > 10) return "success.main";
+      if (value < 3) return "error.main";
+      return "text.primary";
+    } else {
+      return "text.primary";
+    }
   };
 
-  const getConversionColor = (rate: number) => {
-    if (rate > 10) return "success.main";
-    if (rate < 3) return "error.main";
-    return "primary.main";
-  };
+  // Sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let comparison = 0;
 
-  // Sort and paginate items
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let comparison = 0;
+    switch (sortField) {
+      case "brand":
+        comparison = a.brand.localeCompare(b.brand);
+        break;
+      case "trackerId":
+        comparison = a.trackerId.localeCompare(b.trackerId);
+        break;
+      case "impressions":
+        comparison = a.impressions - b.impressions;
+        break;
+      case "clicks":
+        comparison = a.clicks - b.clicks;
+        break;
+      case "ctr":
+        comparison = (a.ctr || 0) - (b.ctr || 0);
+        break;
+      case "newDeposits":
+        comparison = a.newDeposits - b.newDeposits;
+        break;
+      case "conversionRate":
+        comparison = (a.conversionRate || 0) - (b.conversionRate || 0);
+        break;
+      default:
+        comparison = 0;
+    }
 
-      switch (sortField) {
-        case "brand":
-          comparison = a.brand.localeCompare(b.brand);
-          break;
-        case "trackerId":
-          comparison = a.trackerId.localeCompare(b.trackerId);
-          break;
-        case "impressions":
-          comparison = a.impressions - b.impressions;
-          break;
-        case "clicks":
-          comparison = a.clicks - b.clicks;
-          break;
-        case "newDeposits":
-          comparison = a.newDeposits - b.newDeposits;
-          break;
-        case "ctr":
-          comparison = (a.ctr || 0) - (b.ctr || 0);
-          break;
-        case "conversionRate":
-          comparison = (a.conversionRate || 0) - (b.conversionRate || 0);
-          break;
-        case "lastUpdated":
-          comparison =
-            new Date(a.lastUpdated).getTime() -
-            new Date(b.lastUpdated).getTime();
-          break;
-        default:
-          comparison = 0;
-      }
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [items, sortField, sortDirection]);
-
-  const paginatedItems = useMemo(() => {
-    return sortedItems.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
-  }, [sortedItems, page, rowsPerPage]);
+  // Paginate items
+  const paginatedItems = sortedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Find max values for visual indicators
-  const maxValues = useMemo(() => {
-    let maxImpressions = 0;
-    let maxClicks = 0;
-    let maxDeposits = 0;
-
-    items.forEach((item) => {
-      maxImpressions = Math.max(maxImpressions, item.impressions);
-      maxClicks = Math.max(maxClicks, item.clicks);
-      maxDeposits = Math.max(maxDeposits, item.newDeposits);
-    });
-
-    return { maxImpressions, maxClicks, maxDeposits };
-  }, [items]);
-
-  // Render sort indicator
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
+  const maxValues = {
+    maxImpressions: Math.max(...items.map((item) => item.impressions), 1),
+    maxClicks: Math.max(...items.map((item) => item.clicks), 1),
+    maxNewDeposits: Math.max(...items.map((item) => item.newDeposits), 1),
   };
 
   return (
@@ -170,7 +129,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  BRAND {renderSortIcon("brand")}
+                  Brand
+                  {sortField === "brand" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -178,7 +149,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  TRACKER ID {renderSortIcon("trackerId")}
+                  Tracker ID
+                  {sortField === "trackerId" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -193,7 +176,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  IMPRESSIONS {renderSortIcon("impressions")}
+                  Impressions
+                  {sortField === "impressions" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -208,7 +203,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  CLICKS {renderSortIcon("clicks")}
+                  Clicks
+                  {sortField === "clicks" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -223,7 +230,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  CTR {renderSortIcon("ctr")}
+                  CTR
+                  {sortField === "ctr" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -238,7 +257,19 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  NEW DEPOSITS {renderSortIcon("newDeposits")}
+                  New Deposits
+                  {sortField === "newDeposits" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -253,17 +284,22 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  CONVERSION RATE {renderSortIcon("conversionRate")}
+                  Conversion Rate
+                  {sortField === "conversionRate" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
-              <TableCell
-                onClick={() => handleSort("lastUpdated")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  LAST UPDATED {renderSortIcon("lastUpdated")}
-                </Box>
-              </TableCell>
+              <TableCell>Last Updated</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -271,16 +307,14 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No results found.
+                    No traffic report items found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedItems.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography fontWeight="medium">{item.brand}</Typography>
-                  </TableCell>
+                  <TableCell>{item.brand}</TableCell>
                   <TableCell>
                     <Chip
                       label={item.trackerId}
@@ -294,14 +328,8 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                   </TableCell>
                   <TableCell align="right">
                     <Box>
-                      <Typography
-                        color={getPerformanceColor(
-                          item.impressions,
-                          maxValues.maxImpressions,
-                        )}
-                        fontWeight="medium"
-                      >
-                        {item.impressions.toLocaleString()}
+                      <Typography fontWeight="medium">
+                        {formatNumber(item.impressions)}
                       </Typography>
                       <LinearProgress
                         variant="determinate"
@@ -313,26 +341,14 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                           borderRadius: 2,
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.impressions,
-                              maxValues.maxImpressions,
-                            ),
-                          },
                         }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell align="right">
                     <Box>
-                      <Typography
-                        color={getPerformanceColor(
-                          item.clicks,
-                          maxValues.maxClicks,
-                        )}
-                        fontWeight="medium"
-                      >
-                        {item.clicks.toLocaleString()}
+                      <Typography fontWeight="medium">
+                        {formatNumber(item.clicks)}
                       </Typography>
                       <LinearProgress
                         variant="determinate"
@@ -342,69 +358,50 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
                           borderRadius: 2,
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.clicks,
-                              maxValues.maxClicks,
-                            ),
-                          },
                         }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Click-Through Rate">
-                      <Typography
-                        fontWeight="medium"
-                        color={getCTRColor(item.ctr || 0)}
-                      >
-                        {(item.ctr || 0).toFixed(2)}%
-                      </Typography>
-                    </Tooltip>
+                    <Typography
+                      fontWeight="medium"
+                      color={getPerformanceColor(item.ctr || 0, "ctr")}
+                    >
+                      {formatPercentage(item.ctr)}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Box>
-                      <Typography
-                        color={getPerformanceColor(
-                          item.newDeposits,
-                          maxValues.maxDeposits,
-                        )}
-                        fontWeight="medium"
-                      >
-                        {item.newDeposits.toLocaleString()}
+                      <Typography fontWeight="medium">
+                        {formatNumber(item.newDeposits)}
                       </Typography>
                       <LinearProgress
                         variant="determinate"
-                        value={(item.newDeposits / maxValues.maxDeposits) * 100}
+                        value={
+                          (item.newDeposits / maxValues.maxNewDeposits) * 100
+                        }
                         sx={{
                           height: 4,
                           borderRadius: 2,
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.newDeposits,
-                              maxValues.maxDeposits,
-                            ),
-                          },
                         }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Conversion Rate (Deposits/Clicks)">
-                      <Typography
-                        fontWeight="medium"
-                        color={getConversionColor(item.conversionRate || 0)}
-                      >
-                        {(item.conversionRate || 0).toFixed(2)}%
-                      </Typography>
-                    </Tooltip>
+                    <Typography
+                      fontWeight="medium"
+                      color={getPerformanceColor(
+                        item.conversionRate || 0,
+                        "conversionRate",
+                      )}
+                    >
+                      {formatPercentage(item.conversionRate)}
+                    </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDate(item.lastUpdated)}
-                    </Typography>
+                    {new Date(item.lastUpdated).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
               ))
@@ -424,3 +421,5 @@ export function TrafficReportTable({ items }: TrafficReportTableProps) {
     </>
   );
 }
+
+export default TrafficReportTable;

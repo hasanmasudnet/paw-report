@@ -1,45 +1,30 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { RevenueShareItem } from "./types";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
-  Box,
-  Chip,
   TablePagination,
+  Paper,
+  Chip,
+  Typography,
   LinearProgress,
-  Tooltip,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward, Percent } from "@mui/icons-material";
+import { TrendingUp, TrendingDown } from "@mui/icons-material";
 
 interface RevenueShareTableProps {
   items: RevenueShareItem[];
 }
 
-type SortField =
-  | "brand"
-  | "trackerId"
-  | "username"
-  | "affiliate"
-  | "grossRevenue"
-  | "sharePercentage"
-  | "shareAmount"
-  | "netRevenue"
-  | "currency"
-  | "lastUpdated";
-
-type SortDirection = "asc" | "desc";
-
 export function RevenueShareTable({ items }: RevenueShareTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<SortField>("lastUpdated");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<string>("grossRevenue");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -52,7 +37,7 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
     setPage(0);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -61,6 +46,7 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
     }
   };
 
+  // Format currency
   const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -70,104 +56,65 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
+  // Format percentage
+  const formatPercentage = (value: number) => {
+    return value.toFixed(1) + "%";
   };
 
-  const getPerformanceColor = (value: number, max: number) => {
-    const percentage = (value / max) * 100;
-    if (percentage > 70) return "success.main";
-    if (percentage < 30) return "error.main";
-    return "primary.main";
+  // Get color based on performance
+  const getPerformanceColor = (value: number) => {
+    if (value > 10000) return "success.main";
+    if (value < 3000) return "error.main";
+    return "text.primary";
   };
 
-  const getSharePercentageColor = (percentage: number) => {
-    if (percentage > 30) return "error.main";
-    if (percentage < 15) return "success.main";
-    return "warning.main";
-  };
+  // Sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let comparison = 0;
 
-  // Sort and paginate items
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let comparison = 0;
+    switch (sortField) {
+      case "brand":
+        comparison = a.brand.localeCompare(b.brand);
+        break;
+      case "trackerId":
+        comparison = a.trackerId.localeCompare(b.trackerId);
+        break;
+      case "username":
+        comparison = a.username.localeCompare(b.username);
+        break;
+      case "affiliate":
+        comparison = a.affiliate.localeCompare(b.affiliate);
+        break;
+      case "grossRevenue":
+        comparison = a.grossRevenue - b.grossRevenue;
+        break;
+      case "sharePercentage":
+        comparison = a.sharePercentage - b.sharePercentage;
+        break;
+      case "shareAmount":
+        comparison = a.shareAmount - b.shareAmount;
+        break;
+      case "netRevenue":
+        comparison = a.netRevenue - b.netRevenue;
+        break;
+      default:
+        comparison = 0;
+    }
 
-      switch (sortField) {
-        case "brand":
-          comparison = a.brand.localeCompare(b.brand);
-          break;
-        case "trackerId":
-          comparison = a.trackerId.localeCompare(b.trackerId);
-          break;
-        case "username":
-          comparison = a.username.localeCompare(b.username);
-          break;
-        case "affiliate":
-          comparison = a.affiliate.localeCompare(b.affiliate);
-          break;
-        case "grossRevenue":
-          comparison = a.grossRevenue - b.grossRevenue;
-          break;
-        case "sharePercentage":
-          comparison = a.sharePercentage - b.sharePercentage;
-          break;
-        case "shareAmount":
-          comparison = a.shareAmount - b.shareAmount;
-          break;
-        case "netRevenue":
-          comparison = a.netRevenue - b.netRevenue;
-          break;
-        case "currency":
-          comparison = a.currency.localeCompare(b.currency);
-          break;
-        case "lastUpdated":
-          comparison =
-            new Date(a.lastUpdated).getTime() -
-            new Date(b.lastUpdated).getTime();
-          break;
-        default:
-          comparison = 0;
-      }
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [items, sortField, sortDirection]);
-
-  const paginatedItems = useMemo(() => {
-    return sortedItems.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
-  }, [sortedItems, page, rowsPerPage]);
+  // Paginate items
+  const paginatedItems = sortedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Find max values for visual indicators
-  const maxValues = useMemo(() => {
-    let maxGrossRevenue = 0;
-    let maxShareAmount = 0;
-    let maxNetRevenue = 0;
-
-    items.forEach((item) => {
-      maxGrossRevenue = Math.max(maxGrossRevenue, item.grossRevenue);
-      maxShareAmount = Math.max(maxShareAmount, item.shareAmount);
-      maxNetRevenue = Math.max(maxNetRevenue, item.netRevenue);
-    });
-
-    return { maxGrossRevenue, maxShareAmount, maxNetRevenue };
-  }, [items]);
-
-  // Render sort indicator
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
+  const maxValues = {
+    maxGrossRevenue: Math.max(...items.map((item) => item.grossRevenue), 1),
+    maxShareAmount: Math.max(...items.map((item) => item.shareAmount), 1),
+    maxNetRevenue: Math.max(...items.map((item) => item.netRevenue), 1),
   };
 
   return (
@@ -181,7 +128,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  BRAND {renderSortIcon("brand")}
+                  Brand
+                  {sortField === "brand" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -189,7 +148,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  TRACKER ID {renderSortIcon("trackerId")}
+                  Tracker ID
+                  {sortField === "trackerId" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -197,7 +168,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  USERNAME {renderSortIcon("username")}
+                  Username
+                  {sortField === "username" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -205,7 +188,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  AFFILIATE {renderSortIcon("affiliate")}
+                  Affiliate
+                  {sortField === "affiliate" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -220,7 +215,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  GROSS REVENUE {renderSortIcon("grossRevenue")}
+                  Gross Revenue
+                  {sortField === "grossRevenue" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -235,7 +242,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  SHARE % {renderSortIcon("sharePercentage")}
+                  Share %
+                  {sortField === "sharePercentage" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -250,7 +269,19 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  SHARE AMOUNT {renderSortIcon("shareAmount")}
+                  Share Amount
+                  {sortField === "shareAmount" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -265,42 +296,37 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  NET REVENUE {renderSortIcon("netRevenue")}
+                  Net Revenue
+                  {sortField === "netRevenue" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
-              <TableCell
-                onClick={() => handleSort("currency")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  CURRENCY {renderSortIcon("currency")}
-                </Box>
-              </TableCell>
-              <TableCell
-                onClick={() => handleSort("lastUpdated")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  LAST UPDATED {renderSortIcon("lastUpdated")}
-                </Box>
-              </TableCell>
+              <TableCell>Currency</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No results found.
+                    No revenue share items found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedItems.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography fontWeight="medium">{item.brand}</Typography>
-                  </TableCell>
+                  <TableCell>{item.brand}</TableCell>
                   <TableCell>
                     <Chip
                       label={item.trackerId}
@@ -313,20 +339,13 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography>{item.username}</Typography>
+                    <Typography fontWeight="medium">{item.username}</Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography color="primary.main" fontWeight="medium">
-                      {item.affiliate}
-                    </Typography>
-                  </TableCell>
+                  <TableCell>{item.affiliate}</TableCell>
                   <TableCell align="right">
                     <Box>
                       <Typography
-                        color={getPerformanceColor(
-                          item.grossRevenue,
-                          maxValues.maxGrossRevenue,
-                        )}
+                        color={getPerformanceColor(item.grossRevenue)}
                         fontWeight="medium"
                       >
                         {formatCurrency(item.grossRevenue, item.currency)}
@@ -342,39 +361,29 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
                           "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.grossRevenue,
-                              maxValues.maxGrossRevenue,
-                            ),
+                            bgcolor: getPerformanceColor(item.grossRevenue),
                           },
                         }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Revenue Share Percentage">
-                      <Typography
-                        fontWeight="medium"
-                        color={getSharePercentageColor(item.sharePercentage)}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                        }}
-                      >
-                        {item.sharePercentage}%
-                      </Typography>
-                    </Tooltip>
+                    <Typography
+                      fontWeight="medium"
+                      color={
+                        item.sharePercentage > 25
+                          ? "error.main"
+                          : item.sharePercentage < 10
+                            ? "success.main"
+                            : "text.primary"
+                      }
+                    >
+                      {formatPercentage(item.sharePercentage)}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Box>
-                      <Typography
-                        color={getPerformanceColor(
-                          item.shareAmount,
-                          maxValues.maxShareAmount,
-                        )}
-                        fontWeight="medium"
-                      >
+                      <Typography fontWeight="medium">
                         {formatCurrency(item.shareAmount, item.currency)}
                       </Typography>
                       <LinearProgress
@@ -387,12 +396,6 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                           borderRadius: 2,
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.shareAmount,
-                              maxValues.maxShareAmount,
-                            ),
-                          },
                         }}
                       />
                     </Box>
@@ -400,12 +403,25 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                   <TableCell align="right">
                     <Box>
                       <Typography
-                        color={getPerformanceColor(
-                          item.netRevenue,
-                          maxValues.maxNetRevenue,
-                        )}
+                        color={getPerformanceColor(item.netRevenue)}
                         fontWeight="medium"
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                        }}
                       >
+                        {item.netRevenue > item.grossRevenue * 0.8 ? (
+                          <TrendingUp
+                            fontSize="small"
+                            sx={{ mr: 0.5, color: "success.main" }}
+                          />
+                        ) : item.netRevenue < item.grossRevenue * 0.6 ? (
+                          <TrendingDown
+                            fontSize="small"
+                            sx={{ mr: 0.5, color: "error.main" }}
+                          />
+                        ) : null}
                         {formatCurrency(item.netRevenue, item.currency)}
                       </Typography>
                       <LinearProgress
@@ -419,21 +435,13 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
                           "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.netRevenue,
-                              maxValues.maxNetRevenue,
-                            ),
+                            bgcolor: getPerformanceColor(item.netRevenue),
                           },
                         }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell>{item.currency}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDate(item.lastUpdated)}
-                    </Typography>
-                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -452,3 +460,5 @@ export function RevenueShareTable({ items }: RevenueShareTableProps) {
     </>
   );
 }
+
+export default RevenueShareTable;

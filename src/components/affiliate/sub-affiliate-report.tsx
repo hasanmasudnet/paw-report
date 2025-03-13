@@ -363,7 +363,7 @@ function SubAffiliateReport() {
   const summaryMetrics = calculateSummaryMetrics();
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
           Sub-Affiliate Report
@@ -374,7 +374,7 @@ function SubAffiliateReport() {
         </Typography>
       </Box>
 
-      <Stack spacing={3}>
+      <Stack spacing={{ xs: 2, md: 3 }}>
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -387,7 +387,7 @@ function SubAffiliateReport() {
         />
 
         {/* Summary Cards */}
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <Card elevation={2}>
               <CardContent>
@@ -481,12 +481,14 @@ function SubAffiliateReport() {
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
           <Box
             sx={{
-              p: 2,
+              p: { xs: 1.5, sm: 2 },
               borderBottom: 1,
               borderColor: "divider",
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: { xs: 1, sm: 0 },
             }}
           >
             <Typography variant="h6" fontWeight="medium">
@@ -529,14 +531,14 @@ function SubAffiliateReport() {
           <TableContainer
             component={Paper}
             elevation={1}
-            sx={{ borderRadius: 2 }}
+            sx={{ borderRadius: 2, overflowX: "auto" }}
           >
             <Table aria-label="sub-affiliate table">
               <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
                   <TableCell
                     onClick={() => handleSort("parentUsername")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       Parent Affiliate
@@ -556,7 +558,7 @@ function SubAffiliateReport() {
                   </TableCell>
                   <TableCell
                     onClick={() => handleSort("username")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       Sub-Affiliate
@@ -577,7 +579,7 @@ function SubAffiliateReport() {
 
                   <TableCell
                     onClick={() => handleSort("brand")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       Brand
@@ -598,7 +600,7 @@ function SubAffiliateReport() {
 
                   <TableCell
                     onClick={() => handleSort("dealType")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       Deal Type
@@ -619,7 +621,7 @@ function SubAffiliateReport() {
                   <TableCell
                     align="right"
                     onClick={() => handleSort("grossRevenue")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box
                       sx={{
@@ -646,7 +648,7 @@ function SubAffiliateReport() {
                   <TableCell
                     align="right"
                     onClick={() => handleSort("commission")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box
                       sx={{
@@ -673,7 +675,7 @@ function SubAffiliateReport() {
                   <TableCell
                     align="right"
                     onClick={() => handleSort("profit")}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box
                       sx={{
@@ -697,7 +699,7 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell>Currency</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>Currency</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -61,7 +61,7 @@ export function FilterBar({
   };
 
   return (
-    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+    <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Grid container spacing={2}>
         {/* Header and title */}
         <Grid item xs={12}>
@@ -82,7 +82,14 @@ export function FilterBar({
 
         {/* All search boxes in one row */}
         <Grid item xs={12}>
-          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+              width: "100%",
+            }}
+          >
             <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
               <InputLabel id="year-select-label">Year</InputLabel>
               <Select

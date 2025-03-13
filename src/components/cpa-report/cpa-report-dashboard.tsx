@@ -8,7 +8,7 @@ import {
   months,
 } from "./mock-data";
 import { CPAReportItem, CPAReportFilterOptions } from "./types";
-import { SummaryCard } from "./summary-card";
+import SummaryCard from "./summary-card";
 import { FilterBar } from "./filter-bar";
 import { CPAReportTable } from "./cpa-report-table";
 import {
@@ -108,7 +108,7 @@ function CPAReportDashboard() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
           CPA Report Dashboard
@@ -119,7 +119,7 @@ function CPAReportDashboard() {
         </Typography>
       </Box>
 
-      <Stack spacing={3}>
+      <Stack spacing={{ xs: 2, md: 3 }}>
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -139,12 +139,14 @@ function CPAReportDashboard() {
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
           <Box
             sx={{
-              p: 2,
+              p: { xs: 1.5, sm: 2 },
               borderBottom: 1,
               borderColor: "divider",
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: { xs: 1, sm: 0 },
             }}
           >
             <Typography variant="h6" fontWeight="medium">

@@ -1,40 +1,30 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { CPAReportItem } from "./types";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
-  Box,
-  Chip,
   TablePagination,
+  Paper,
+  Chip,
+  Typography,
   LinearProgress,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { TrendingUp } from "@mui/icons-material";
 
 interface CPAReportTableProps {
   items: CPAReportItem[];
 }
 
-type SortField =
-  | "brand"
-  | "trackerId"
-  | "username"
-  | "cpaCount"
-  | "currency"
-  | "lastUpdated";
-
-type SortDirection = "asc" | "desc";
-
 export function CPAReportTable({ items }: CPAReportTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<SortField>("lastUpdated");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<string>("cpaCount");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -47,7 +37,7 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
     setPage(0);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -56,82 +46,59 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
+  // Format large numbers
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat("en-US").format(value);
   };
 
-  const getPerformanceColor = (value: number, max: number) => {
-    const percentage = (value / max) * 100;
-    if (percentage > 70) return "success.main";
-    if (percentage < 30) return "error.main";
-    return "primary.main";
+  // Get color based on performance
+  const getPerformanceColor = (value: number) => {
+    if (value > 300) return "success.main";
+    if (value < 50) return "error.main";
+    return "text.primary";
   };
 
-  // Sort and paginate items
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let comparison = 0;
+  // Sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let comparison = 0;
 
-      switch (sortField) {
-        case "brand":
-          comparison = a.brand.localeCompare(b.brand);
-          break;
-        case "trackerId":
-          comparison = a.trackerId.localeCompare(b.trackerId);
-          break;
-        case "username":
-          comparison = a.username.localeCompare(b.username);
-          break;
-        case "cpaCount":
-          comparison = a.cpaCount - b.cpaCount;
-          break;
-        case "currency":
-          comparison = a.currency.localeCompare(b.currency);
-          break;
-        case "lastUpdated":
-          comparison =
-            new Date(a.lastUpdated).getTime() -
-            new Date(b.lastUpdated).getTime();
-          break;
-        default:
-          comparison = 0;
-      }
+    switch (sortField) {
+      case "brand":
+        comparison = a.brand.localeCompare(b.brand);
+        break;
+      case "trackerId":
+        comparison = a.trackerId.localeCompare(b.trackerId);
+        break;
+      case "username":
+        comparison = a.username.localeCompare(b.username);
+        break;
+      case "cpaCount":
+        comparison = a.cpaCount - b.cpaCount;
+        break;
+      case "lastUpdated":
+        comparison =
+          new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
+        break;
+      default:
+        comparison = 0;
+    }
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [items, sortField, sortDirection]);
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
 
-  const paginatedItems = useMemo(() => {
-    return sortedItems.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
-  }, [sortedItems, page, rowsPerPage]);
+  // Paginate items
+  const paginatedItems = sortedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Find max values for visual indicators
-  const maxCPACount = useMemo(() => {
-    return Math.max(...items.map((item) => item.cpaCount), 1);
-  }, [items]);
-
-  // Render sort indicator
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
-  };
+  const maxCpaCount = Math.max(...items.map((item) => item.cpaCount), 1);
 
   return (
     <>
       <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2 }}>
-        <Table aria-label="CPA report table">
+        <Table aria-label="cpa report table">
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
               <TableCell
@@ -139,7 +106,19 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  BRAND {renderSortIcon("brand")}
+                  Brand
+                  {sortField === "brand" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -147,7 +126,19 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  TRACKER ID {renderSortIcon("trackerId")}
+                  Tracker ID
+                  {sortField === "trackerId" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -155,7 +146,19 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  USERNAME {renderSortIcon("username")}
+                  Username
+                  {sortField === "username" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -170,23 +173,41 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  CPA COUNT {renderSortIcon("cpaCount")}
+                  CPA Count
+                  {sortField === "cpaCount" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
-              <TableCell
-                onClick={() => handleSort("currency")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  CURRENCY {renderSortIcon("currency")}
-                </Box>
-              </TableCell>
+              <TableCell align="right">Estimated Value</TableCell>
+              <TableCell>Currency</TableCell>
               <TableCell
                 onClick={() => handleSort("lastUpdated")}
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  LAST UPDATED {renderSortIcon("lastUpdated")}
+                  Last Updated
+                  {sortField === "lastUpdated" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
             </TableRow>
@@ -194,18 +215,16 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
           <TableBody>
             {paginatedItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No results found.
+                    No CPA report items found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedItems.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography fontWeight="medium">{item.brand}</Typography>
-                  </TableCell>
+                  <TableCell>{item.brand}</TableCell>
                   <TableCell>
                     <Chip
                       label={item.trackerId}
@@ -218,39 +237,44 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography>{item.username}</Typography>
+                    <Typography fontWeight="medium">{item.username}</Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Box>
                       <Typography
-                        color={getPerformanceColor(item.cpaCount, maxCPACount)}
+                        color={getPerformanceColor(item.cpaCount)}
                         fontWeight="medium"
                       >
-                        {item.cpaCount.toLocaleString()}
+                        {formatNumber(item.cpaCount)}
                       </Typography>
                       <LinearProgress
                         variant="determinate"
-                        value={(item.cpaCount / maxCPACount) * 100}
+                        value={(item.cpaCount / maxCpaCount) * 100}
                         sx={{
                           height: 4,
                           borderRadius: 2,
                           mt: 0.5,
                           bgcolor: "rgba(0,0,0,0.05)",
                           "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(
-                              item.cpaCount,
-                              maxCPACount,
-                            ),
+                            bgcolor: getPerformanceColor(item.cpaCount),
                           },
                         }}
                       />
                     </Box>
                   </TableCell>
+                  <TableCell align="right">
+                    <Typography fontWeight="medium">
+                      {new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: item.currency,
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(item.cpaCount * 100)}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{item.currency}</TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDate(item.lastUpdated)}
-                    </Typography>
+                    {new Date(item.lastUpdated).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
               ))
@@ -270,3 +294,5 @@ export function CPAReportTable({ items }: CPAReportTableProps) {
     </>
   );
 }
+
+export default CPAReportTable;

@@ -1,20 +1,19 @@
+import React from "react";
 import { TrafficReportItem } from "./types";
 import {
-  Grid,
+  Box,
   Card,
   CardContent,
-  CardHeader,
+  Grid,
   Typography,
-  Box,
   Tooltip,
-  LinearProgress,
 } from "@mui/material";
 import {
+  TrendingUp,
   Visibility,
   TouchApp,
-  AddCircle,
+  PersonAdd,
   Info,
-  BarChart,
 } from "@mui/icons-material";
 
 interface SummaryCardProps {
@@ -22,93 +21,69 @@ interface SummaryCardProps {
   filteredItems: TrafficReportItem[];
 }
 
-export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
-  // Calculate totals for filtered items
-  const calculateTotals = (items: TrafficReportItem[]) => {
+function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
+  // Calculate summary metrics
+  const calculateSummaryMetrics = () => {
     let totalImpressions = 0;
     let totalClicks = 0;
-    let totalDeposits = 0;
+    let totalNewDeposits = 0;
 
-    items.forEach((item) => {
+    // Calculate totals for filtered items
+    filteredItems.forEach((item) => {
       totalImpressions += item.impressions;
       totalClicks += item.clicks;
-      totalDeposits += item.newDeposits;
+      totalNewDeposits += item.newDeposits;
     });
 
-    // Calculate average rates
-    const avgCTR =
+    // Calculate percentage of total (comparing filtered to all items)
+    let percentageOfTotal = 0;
+    let totalAllImpressions = 0;
+
+    allItems.forEach((item) => {
+      totalAllImpressions += item.impressions;
+    });
+
+    if (totalAllImpressions > 0) {
+      percentageOfTotal = (totalImpressions / totalAllImpressions) * 100;
+    }
+
+    // Calculate rates
+    const ctr =
       totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-    const avgConversionRate =
-      totalClicks > 0 ? (totalDeposits / totalClicks) * 100 : 0;
+    const conversionRate =
+      totalClicks > 0 ? (totalNewDeposits / totalClicks) * 100 : 0;
 
     return {
       totalImpressions,
       totalClicks,
-      totalDeposits,
-      avgCTR,
-      avgConversionRate,
-      totalItems: items.length,
+      totalNewDeposits,
+      percentageOfTotal,
+      ctr,
+      conversionRate,
+      itemCount: filteredItems.length,
+      totalItemCount: allItems.length,
     };
   };
 
-  const totals = calculateTotals(filteredItems);
-  const allTotals = calculateTotals(allItems);
-
-  // Calculate percentages of filtered vs all
-  const percentageOfImpressions =
-    allTotals.totalImpressions > 0
-      ? ((totals.totalImpressions / allTotals.totalImpressions) * 100).toFixed(
-          1,
-        )
-      : "0";
-
-  const percentageOfClicks =
-    allTotals.totalClicks > 0
-      ? ((totals.totalClicks / allTotals.totalClicks) * 100).toFixed(1)
-      : "0";
-
-  const percentageOfDeposits =
-    allTotals.totalDeposits > 0
-      ? ((totals.totalDeposits / allTotals.totalDeposits) * 100).toFixed(1)
-      : "0";
-
-  const percentageOfItems =
-    allTotals.totalItems > 0
-      ? ((totals.totalItems / allTotals.totalItems) * 100).toFixed(1)
-      : "0";
+  const metrics = calculateSummaryMetrics();
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={{ xs: 2, md: 3 }}>
       <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Impressions</Typography>
-                <Tooltip title="Total number of ad impressions">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<Visibility color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalImpressions.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfImpressions)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfImpressions}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Visibility color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Total Impressions</Typography>
+              <Tooltip title="Total number of ad impressions across all trackers">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.totalImpressions.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              of total impressions
+              {metrics.percentageOfTotal.toFixed(1)}% of total impressions
             </Typography>
           </CardContent>
         </Card>
@@ -116,34 +91,19 @@ export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
 
       <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Clicks</Typography>
-                <Tooltip title="Total number of clicks on ads">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<TouchApp color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalClicks.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfClicks)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfClicks}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TouchApp color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Total Clicks</Typography>
+              <Tooltip title="Total number of clicks across all trackers">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.totalClicks.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              CTR: {totals.avgCTR.toFixed(2)}%
+              CTR: {metrics.ctr.toFixed(2)}%
             </Typography>
           </CardContent>
         </Card>
@@ -151,34 +111,19 @@ export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
 
       <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">New Deposits</Typography>
-                <Tooltip title="Total number of new deposits">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<AddCircle color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalDeposits.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfDeposits)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfDeposits}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <PersonAdd color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">New Deposits</Typography>
+              <Tooltip title="Total number of new deposits from clicks">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.totalNewDeposits.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              Conversion Rate: {totals.avgConversionRate.toFixed(2)}%
+              Conversion Rate: {metrics.conversionRate.toFixed(2)}%
             </Typography>
           </CardContent>
         </Card>
@@ -186,34 +131,25 @@ export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
 
       <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Performance</Typography>
-                <Tooltip title="Overall traffic performance metrics">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<BarChart color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalItems.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfItems)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfItems}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TrendingUp color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Report Summary</Typography>
+              <Tooltip title="Number of items in the current filtered view vs. total">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.itemCount.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              of total traffic items
+              of {metrics.totalItemCount.toLocaleString()} total items (
+              {metrics.totalItemCount > 0
+                ? ((metrics.itemCount / metrics.totalItemCount) * 100).toFixed(
+                    1,
+                  )
+                : 0}
+              %)
             </Typography>
           </CardContent>
         </Card>
@@ -221,3 +157,5 @@ export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
     </Grid>
   );
 }
+
+export default SummaryCard;

@@ -1,63 +1,38 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { Affiliate } from "./types";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Typography,
-  Box,
-  Collapse,
-  Chip,
-  Tooltip,
   TablePagination,
+  Paper,
+  Chip,
+  Typography,
   LinearProgress,
-  Badge,
+  Collapse,
+  IconButton,
 } from "@mui/material";
 import {
-  KeyboardArrowDown,
-  KeyboardArrowRight,
   TrendingUp,
   TrendingDown,
-  ArrowUpward,
-  ArrowDownward,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
 } from "@mui/icons-material";
 
 interface AffiliateTableProps {
   affiliates: Affiliate[];
 }
 
-type SortField =
-  | "username"
-  | "brand"
-  | "category"
-  | "dealType"
-  | "grossRevenue"
-  | "commission"
-  | "cpaCommission"
-  | "profit"
-  | "affiliate";
-type SortDirection = "asc" | "desc";
-
-export function AffiliateTable({ affiliates }: AffiliateTableProps) {
-  const [expandedAffiliates, setExpandedAffiliates] = useState<
-    Record<string, boolean>
-  >({});
+function AffiliateTable({ affiliates }: AffiliateTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<SortField>("grossRevenue");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-
-  const toggleExpand = (affiliateId: string) => {
-    setExpandedAffiliates((prev) => ({
-      ...prev,
-      [affiliateId]: !prev[affiliateId],
-    }));
-  };
+  const [sortField, setSortField] = useState<string>("grossRevenue");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -70,7 +45,7 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     setPage(0);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -79,6 +54,14 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     }
   };
 
+  const toggleRowExpanded = (affiliateId: string) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [affiliateId]: !prev[affiliateId],
+    }));
+  };
+
+  // Format currency
   const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -88,12 +71,14 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     }).format(value);
   };
 
+  // Get color based on performance
   const getPerformanceColor = (value: number) => {
     if (value > 10000) return "success.main";
     if (value < 3000) return "error.main";
     return "text.primary";
   };
 
+  // Get color for commission rate
   const getCommissionRateColor = (revenue: number, commission: number) => {
     if (revenue === 0) return "text.secondary";
 
@@ -103,6 +88,7 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     return "text.primary";
   };
 
+  // Get chip color for deal type
   const getDealTypeChipColor = (dealType: string) => {
     switch (dealType) {
       case "CPA":
@@ -120,83 +106,63 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     }
   };
 
-  // Calculate commission rate for display
+  // Calculate commission rate
   const calculateCommissionRate = (revenue: number, commission: number) => {
     if (revenue === 0) return 0;
     return (commission / revenue) * 100;
   };
 
-  // Sort and paginate affiliates
-  const sortedAffiliates = useMemo(() => {
-    return [...affiliates].sort((a, b) => {
-      let comparison = 0;
+  // Sort affiliates
+  const sortedAffiliates = [...affiliates].sort((a, b) => {
+    let comparison = 0;
 
-      switch (sortField) {
-        case "username":
-          comparison = a.username.localeCompare(b.username);
-          break;
-        case "brand":
-          comparison = a.brand.localeCompare(b.brand);
-          break;
-        case "category":
-          comparison = a.category.localeCompare(b.category);
-          break;
-        case "dealType":
-          comparison = a.dealType.localeCompare(b.dealType);
-          break;
-        case "grossRevenue":
-          comparison = a.grossRevenue - b.grossRevenue;
-          break;
-        case "commission":
-          comparison = a.commission - b.commission;
-          break;
-        case "cpaCommission":
-          comparison = a.cpaCommission - b.cpaCommission;
-          break;
-        case "profit":
-          comparison = a.profit - b.profit;
-          break;
-        case "affiliate":
-          comparison = (a.affiliate || "").localeCompare(b.affiliate || "");
-          break;
-        default:
-          comparison = 0;
-      }
+    switch (sortField) {
+      case "username":
+        comparison = a.username.localeCompare(b.username);
+        break;
+      case "brand":
+        comparison = a.brand.localeCompare(b.brand);
+        break;
+      case "category":
+        comparison = a.category.localeCompare(b.category);
+        break;
+      case "dealType":
+        comparison = a.dealType.localeCompare(b.dealType);
+        break;
+      case "grossRevenue":
+        comparison = a.grossRevenue - b.grossRevenue;
+        break;
+      case "commission":
+        comparison = a.commission - b.commission;
+        break;
+      case "cpaCommission":
+        comparison = a.cpaCommission - b.cpaCommission;
+        break;
+      case "profit":
+        comparison = a.profit - b.profit;
+        break;
+      case "subAffiliateCount":
+        comparison =
+          (a.subAffiliates?.length || 0) - (b.subAffiliates?.length || 0);
+        break;
+      default:
+        comparison = 0;
+    }
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [affiliates, sortField, sortDirection]);
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
 
-  const paginatedAffiliates = useMemo(() => {
-    return sortedAffiliates.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
-  }, [sortedAffiliates, page, rowsPerPage]);
+  // Paginate affiliates
+  const paginatedAffiliates = sortedAffiliates.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Find max values for visual indicators
-  const maxValues = useMemo(() => {
-    let maxRevenue = 0;
-    let maxCommission = 0;
-    let maxProfit = 0;
-
-    affiliates.forEach((affiliate) => {
-      maxRevenue = Math.max(maxRevenue, affiliate.grossRevenue);
-      maxCommission = Math.max(maxCommission, affiliate.commission);
-      maxProfit = Math.max(maxProfit, affiliate.profit);
-    });
-
-    return { maxRevenue, maxCommission, maxProfit };
-  }, [affiliates]);
-
-  // Render sort indicator
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
+  const maxValues = {
+    maxRevenue: Math.max(...affiliates.map((aff) => aff.grossRevenue), 1),
+    maxCommission: Math.max(...affiliates.map((aff) => aff.commission), 1),
+    maxProfit: Math.max(...affiliates.map((aff) => aff.profit), 1),
   };
 
   return (
@@ -205,13 +171,25 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
         <Table aria-label="affiliate table">
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
-              <TableCell padding="checkbox" />
+              <TableCell width={50} />
               <TableCell
                 onClick={() => handleSort("username")}
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  Username {renderSortIcon("username")}
+                  Username
+                  {sortField === "username" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -219,7 +197,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  Brand {renderSortIcon("brand")}
+                  Brand
+                  {sortField === "brand" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -227,15 +217,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  Category {renderSortIcon("category")}
-                </Box>
-              </TableCell>
-              <TableCell
-                onClick={() => handleSort("affiliate")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  Affiliate Company {renderSortIcon("affiliate")}
+                  Category
+                  {sortField === "category" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -243,7 +237,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  Deal Type {renderSortIcon("dealType")}
+                  Deal Type
+                  {sortField === "dealType" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -258,7 +264,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  Gross Revenue {renderSortIcon("grossRevenue")}
+                  Gross Revenue
+                  {sortField === "grossRevenue" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -273,7 +291,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  Commission {renderSortIcon("commission")}
+                  Commission
+                  {sortField === "commission" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -288,7 +318,19 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  CPA Commission {renderSortIcon("cpaCommission")}
+                  CPA Commission
+                  {sortField === "cpaCommission" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -303,7 +345,39 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  Profit {renderSortIcon("profit")}
+                  Profit
+                  {sortField === "profit" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
+                </Box>
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort("subAffiliateCount")}
+                sx={{ cursor: "pointer" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  Sub-Affiliates
+                  {sortField === "subAffiliateCount" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell>Currency</TableCell>
@@ -312,386 +386,327 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
           <TableBody>
             {paginatedAffiliates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No results found.
+                    No affiliates found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedAffiliates.map((affiliate) => (
-                <React.Fragment key={affiliate.id}>
-                  <TableRow hover>
-                    <TableCell padding="checkbox">
-                      {affiliate.subAffiliates &&
-                        affiliate.subAffiliates.length > 0 && (
-                          <IconButton
-                            size="small"
-                            onClick={() => toggleExpand(affiliate.id)}
-                            aria-label="expand row"
-                          >
-                            {expandedAffiliates[affiliate.id] ? (
-                              <KeyboardArrowDown />
-                            ) : (
-                              <Badge
-                                badgeContent={affiliate.subAffiliates.length}
-                                color="primary"
-                                sx={{
-                                  ".MuiBadge-badge": {
-                                    fontSize: "0.6rem",
-                                    height: "16px",
-                                    minWidth: "16px",
-                                  },
-                                }}
-                              >
-                                <KeyboardArrowRight />
-                              </Badge>
-                            )}
-                          </IconButton>
-                        )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography fontWeight="medium">
-                        {affiliate.username}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{affiliate.brand}</TableCell>
-                    <TableCell>{affiliate.category}</TableCell>
-                    <TableCell>
-                      <Typography color="primary.main" fontWeight="medium">
-                        {affiliate.affiliate || "N/A"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={affiliate.dealType}
-                        size="small"
-                        sx={{
-                          bgcolor: getDealTypeChipColor(affiliate.dealType).bg,
-                          color: getDealTypeChipColor(affiliate.dealType).color,
-                          fontWeight: "medium",
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Box>
-                        <Typography
-                          color={getPerformanceColor(affiliate.grossRevenue)}
-                          fontWeight="medium"
+              paginatedAffiliates.map((affiliate) => {
+                const isExpanded = expandedRows[affiliate.id] || false;
+                return (
+                  <>
+                    <TableRow key={affiliate.id} hover>
+                      <TableCell>
+                        <IconButton
+                          aria-label="expand row"
+                          size="small"
+                          onClick={() => toggleRowExpanded(affiliate.id)}
+                          disabled={!affiliate.subAffiliates?.length}
+                          sx={{
+                            opacity: affiliate.subAffiliates?.length ? 1 : 0.3,
+                          }}
                         >
+                          {isExpanded ? (
+                            <KeyboardArrowUp />
+                          ) : (
+                            <KeyboardArrowDown />
+                          )}
+                        </IconButton>
+                      </TableCell>
+                      <TableCell>
+                        <Typography fontWeight="medium">
+                          {affiliate.username}
+                        </Typography>
+                        {affiliate.affiliate && (
+                          <Typography variant="caption" color="text.secondary">
+                            {affiliate.affiliate}
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>{affiliate.brand}</TableCell>
+                      <TableCell>{affiliate.category}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={affiliate.dealType}
+                          size="small"
+                          sx={{
+                            bgcolor: getDealTypeChipColor(affiliate.dealType)
+                              .bg,
+                            color: getDealTypeChipColor(affiliate.dealType)
+                              .color,
+                            fontWeight: "medium",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box>
+                          <Typography
+                            color={getPerformanceColor(affiliate.grossRevenue)}
+                            fontWeight="medium"
+                          >
+                            {formatCurrency(
+                              affiliate.grossRevenue,
+                              affiliate.currency,
+                            )}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={
+                              (affiliate.grossRevenue / maxValues.maxRevenue) *
+                              100
+                            }
+                            sx={{
+                              height: 4,
+                              borderRadius: 2,
+                              mt: 0.5,
+                              bgcolor: "rgba(0,0,0,0.05)",
+                              "& .MuiLinearProgress-bar": {
+                                bgcolor: getPerformanceColor(
+                                  affiliate.grossRevenue,
+                                ),
+                              },
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box>
+                          <Typography
+                            color={getCommissionRateColor(
+                              affiliate.grossRevenue,
+                              affiliate.commission,
+                            )}
+                            fontWeight="medium"
+                          >
+                            {formatCurrency(
+                              affiliate.commission,
+                              affiliate.currency,
+                            )}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "flex-end",
+                              mt: 0.5,
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              color={getCommissionRateColor(
+                                affiliate.grossRevenue,
+                                affiliate.commission,
+                              )}
+                            >
+                              {calculateCommissionRate(
+                                affiliate.grossRevenue,
+                                affiliate.commission,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography fontWeight="medium">
                           {formatCurrency(
-                            affiliate.grossRevenue,
+                            affiliate.cpaCommission,
                             affiliate.currency,
                           )}
                         </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-end",
+                          }}
+                        >
+                          <Typography
+                            color={getPerformanceColor(affiliate.profit)}
+                            fontWeight="medium"
+                            sx={{ display: "flex", alignItems: "center" }}
+                          >
+                            {affiliate.profit > affiliate.grossRevenue * 0.5 ? (
+                              <TrendingUp
+                                fontSize="small"
+                                sx={{ mr: 0.5, color: "success.main" }}
+                              />
+                            ) : affiliate.profit <
+                              affiliate.grossRevenue * 0.3 ? (
+                              <TrendingDown
+                                fontSize="small"
+                                sx={{ mr: 0.5, color: "error.main" }}
+                              />
+                            ) : null}
+                            {formatCurrency(
+                              affiliate.profit,
+                              affiliate.currency,
+                            )}
+                          </Typography>
+                        </Box>
                         <LinearProgress
                           variant="determinate"
-                          value={
-                            (affiliate.grossRevenue / maxValues.maxRevenue) *
-                            100
-                          }
+                          value={(affiliate.profit / maxValues.maxProfit) * 100}
                           sx={{
                             height: 4,
                             borderRadius: 2,
                             mt: 0.5,
                             bgcolor: "rgba(0,0,0,0.05)",
                             "& .MuiLinearProgress-bar": {
-                              bgcolor: getPerformanceColor(
-                                affiliate.grossRevenue,
-                              ),
+                              bgcolor: getPerformanceColor(affiliate.profit),
                             },
                           }}
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Box>
-                        <Typography
-                          color={getCommissionRateColor(
-                            affiliate.grossRevenue,
-                            affiliate.commission,
-                          )}
-                          fontWeight="medium"
-                        >
-                          {formatCurrency(
-                            affiliate.commission,
-                            affiliate.currency,
-                          )}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                            mt: 0.5,
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            color={getCommissionRateColor(
-                              affiliate.grossRevenue,
-                              affiliate.commission,
-                            )}
-                          >
-                            {calculateCommissionRate(
-                              affiliate.grossRevenue,
-                              affiliate.commission,
-                            ).toFixed(1)}
-                            %
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">
-                      {formatCurrency(
-                        affiliate.cpaCommission,
-                        affiliate.currency,
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                        }}
-                      >
-                        <Typography
-                          color={getPerformanceColor(affiliate.profit)}
-                          fontWeight="medium"
-                          sx={{ display: "flex", alignItems: "center" }}
-                        >
-                          {affiliate.profit > affiliate.grossRevenue * 0.8 ? (
-                            <TrendingUp
-                              fontSize="small"
-                              sx={{ mr: 0.5, color: "success.main" }}
-                            />
-                          ) : affiliate.profit <
-                            affiliate.grossRevenue * 0.7 ? (
-                            <TrendingDown
-                              fontSize="small"
-                              sx={{ mr: 0.5, color: "error.main" }}
-                            />
-                          ) : null}
-                          {formatCurrency(affiliate.profit, affiliate.currency)}
-                        </Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={(affiliate.profit / maxValues.maxProfit) * 100}
-                        sx={{
-                          height: 4,
-                          borderRadius: 2,
-                          mt: 0.5,
-                          bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(affiliate.profit),
-                          },
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>{affiliate.currency}</TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={affiliate.subAffiliates?.length || 0}
+                          size="small"
+                          color={
+                            affiliate.subAffiliates?.length
+                              ? "primary"
+                              : "default"
+                          }
+                          sx={{ fontWeight: "medium" }}
+                        />
+                      </TableCell>
+                      <TableCell>{affiliate.currency}</TableCell>
+                    </TableRow>
 
-                  {/* Sub-affiliates */}
-                  <TableRow>
-                    <TableCell
-                      style={{ paddingBottom: 0, paddingTop: 0 }}
-                      colSpan={10}
-                    >
-                      <Collapse
-                        in={expandedAffiliates[affiliate.id]}
-                        timeout="auto"
-                        unmountOnExit
-                      >
-                        <Box sx={{ margin: 1, ml: 4, mb: 2 }}>
-                          <Typography
-                            variant="subtitle2"
-                            gutterBottom
-                            component="div"
-                            sx={{ fontStyle: "italic", mb: 1 }}
+                    {/* Sub-Affiliates Collapsible Section */}
+                    {affiliate.subAffiliates && (
+                      <TableRow>
+                        <TableCell
+                          style={{ paddingBottom: 0, paddingTop: 0 }}
+                          colSpan={11}
+                        >
+                          <Collapse
+                            in={isExpanded}
+                            timeout="auto"
+                            unmountOnExit
                           >
-                            Sub-affiliates (
-                            {affiliate.subAffiliates?.length || 0})
-                          </Typography>
-                          <Table size="small" aria-label="sub-affiliates">
-                            <TableBody>
-                              {affiliate.subAffiliates?.map((subAffiliate) => (
-                                <TableRow
-                                  key={subAffiliate.id}
-                                  sx={{
-                                    bgcolor: "action.hover",
-                                    "&:hover": { bgcolor: "action.selected" },
-                                  }}
-                                >
-                                  <TableCell
-                                    sx={{ borderBottom: "none" }}
-                                  ></TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      {subAffiliate.username}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      {subAffiliate.brand}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      {subAffiliate.category}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="primary.main"
-                                    >
-                                      {affiliate.affiliate || "N/A"}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Chip
-                                      label={subAffiliate.dealType}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: getDealTypeChipColor(
-                                          subAffiliate.dealType,
-                                        ).bg,
-                                        color: getDealTypeChipColor(
-                                          subAffiliate.dealType,
-                                        ).color,
-                                        fontWeight: "medium",
-                                        fontSize: "0.7rem",
-                                      }}
-                                    />
-                                  </TableCell>
-                                  <TableCell
-                                    align="right"
-                                    sx={{ borderBottom: "none" }}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color={getPerformanceColor(
-                                        subAffiliate.grossRevenue,
-                                      )}
-                                    >
-                                      {formatCurrency(
-                                        subAffiliate.grossRevenue,
-                                        subAffiliate.currency,
-                                      )}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell
-                                    align="right"
-                                    sx={{ borderBottom: "none" }}
-                                  >
-                                    <Box>
-                                      <Typography
-                                        variant="body2"
-                                        color={getCommissionRateColor(
-                                          subAffiliate.grossRevenue,
-                                          subAffiliate.commission,
-                                        )}
-                                      >
-                                        {formatCurrency(
-                                          subAffiliate.commission,
-                                          subAffiliate.currency,
-                                        )}
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        color={getCommissionRateColor(
-                                          subAffiliate.grossRevenue,
-                                          subAffiliate.commission,
-                                        )}
-                                      >
-                                        {calculateCommissionRate(
-                                          subAffiliate.grossRevenue,
-                                          subAffiliate.commission,
-                                        ).toFixed(1)}
-                                        %
-                                      </Typography>
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell
-                                    align="right"
-                                    sx={{ borderBottom: "none" }}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      {formatCurrency(
-                                        subAffiliate.cpaCommission,
-                                        subAffiliate.currency,
-                                      )}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell
-                                    align="right"
-                                    sx={{ borderBottom: "none" }}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color={getPerformanceColor(
-                                        subAffiliate.profit,
-                                      )}
-                                      sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "flex-end",
-                                      }}
-                                    >
-                                      {subAffiliate.profit >
-                                      subAffiliate.grossRevenue * 0.8 ? (
-                                        <TrendingUp
-                                          fontSize="small"
-                                          sx={{
-                                            mr: 0.5,
-                                            color: "success.main",
-                                          }}
-                                        />
-                                      ) : subAffiliate.profit <
-                                        subAffiliate.grossRevenue * 0.7 ? (
-                                        <TrendingDown
-                                          fontSize="small"
-                                          sx={{ mr: 0.5, color: "error.main" }}
-                                        />
-                                      ) : null}
-                                      {formatCurrency(
-                                        subAffiliate.profit,
-                                        subAffiliate.currency,
-                                      )}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ borderBottom: "none" }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      {subAffiliate.currency}
-                                    </Typography>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Box>
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
-                </React.Fragment>
-              ))
+                            <Box sx={{ margin: 2 }}>
+                              <Typography
+                                variant="subtitle2"
+                                gutterBottom
+                                component="div"
+                                sx={{ fontWeight: "bold", mb: 2 }}
+                              >
+                                Sub-Affiliates ({affiliate.subAffiliates.length}
+                                )
+                              </Typography>
+                              <Table
+                                size="small"
+                                aria-label="sub-affiliates"
+                                sx={{
+                                  bgcolor: "action.hover",
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Username</TableCell>
+                                    <TableCell>Deal Type</TableCell>
+                                    <TableCell align="right">
+                                      Gross Revenue
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      Commission
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      CPA Commission
+                                    </TableCell>
+                                    <TableCell align="right">Profit</TableCell>
+                                    <TableCell>Currency</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {affiliate.subAffiliates.map(
+                                    (subAffiliate) => (
+                                      <TableRow key={subAffiliate.id}>
+                                        <TableCell component="th" scope="row">
+                                          {subAffiliate.username}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Chip
+                                            label={subAffiliate.dealType}
+                                            size="small"
+                                            sx={{
+                                              bgcolor: getDealTypeChipColor(
+                                                subAffiliate.dealType,
+                                              ).bg,
+                                              color: getDealTypeChipColor(
+                                                subAffiliate.dealType,
+                                              ).color,
+                                              fontWeight: "medium",
+                                            }}
+                                          />
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          {formatCurrency(
+                                            subAffiliate.grossRevenue,
+                                            subAffiliate.currency,
+                                          )}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              flexDirection: "column",
+                                              alignItems: "flex-end",
+                                            }}
+                                          >
+                                            {formatCurrency(
+                                              subAffiliate.commission,
+                                              subAffiliate.currency,
+                                            )}
+                                            <Typography
+                                              variant="caption"
+                                              color={getCommissionRateColor(
+                                                subAffiliate.grossRevenue,
+                                                subAffiliate.commission,
+                                              )}
+                                            >
+                                              {calculateCommissionRate(
+                                                subAffiliate.grossRevenue,
+                                                subAffiliate.commission,
+                                              ).toFixed(1)}
+                                              %
+                                            </Typography>
+                                          </Box>
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          {formatCurrency(
+                                            subAffiliate.cpaCommission,
+                                            subAffiliate.currency,
+                                          )}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          {formatCurrency(
+                                            subAffiliate.profit,
+                                            subAffiliate.currency,
+                                          )}
+                                        </TableCell>
+                                        <TableCell>
+                                          {subAffiliate.currency}
+                                        </TableCell>
+                                      </TableRow>
+                                    ),
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -708,3 +723,5 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
     </>
   );
 }
+
+export default AffiliateTable;

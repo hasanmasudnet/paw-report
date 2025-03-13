@@ -1,175 +1,150 @@
+import React from "react";
 import { CPAReportItem } from "./types";
 import {
-  Grid,
+  Box,
   Card,
   CardContent,
-  CardHeader,
+  Grid,
   Typography,
-  Box,
   Tooltip,
-  LinearProgress,
 } from "@mui/material";
-import { AttachMoney, Paid, Info, BarChart } from "@mui/icons-material";
+import {
+  TrendingUp,
+  Visibility,
+  TouchApp,
+  PersonAdd,
+  Info,
+} from "@mui/icons-material";
 
 interface SummaryCardProps {
   allItems: CPAReportItem[];
   filteredItems: CPAReportItem[];
 }
 
-export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
-  // Calculate totals for filtered items with currency conversion
-  const calculateTotals = (items: CPAReportItem[]) => {
-    // Define exchange rates to USD (simplified for demo)
-    const exchangeRates = {
-      USD: 1,
-      EUR: 1.09,
-      GBP: 1.28,
-      CAD: 0.73,
-      AUD: 0.66,
-    };
-
+function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
+  // Calculate summary metrics
+  const calculateSummaryMetrics = () => {
     let totalCPACount = 0;
-    let totalUSDValue = 0;
-    const avgCPAValue = 100; // Assuming average CPA value of $100 for simplicity
+    let totalEstimatedValue = 0;
+    const averageCPAValue = 100; // Assuming $100 per CPA
 
-    items.forEach((item) => {
-      // Convert to USD for consistent calculations
-      const exchangeRate =
-        exchangeRates[item.currency as keyof typeof exchangeRates] || 1;
-
+    // Calculate totals for filtered items
+    filteredItems.forEach((item) => {
       totalCPACount += item.cpaCount;
-      totalUSDValue += item.cpaCount * avgCPAValue * exchangeRate;
+      totalEstimatedValue += item.cpaCount * averageCPAValue;
     });
+
+    // Calculate percentage of total (comparing filtered to all items)
+    let percentageOfTotal = 0;
+    let totalAllCPACount = 0;
+
+    allItems.forEach((item) => {
+      totalAllCPACount += item.cpaCount;
+    });
+
+    if (totalAllCPACount > 0) {
+      percentageOfTotal = (totalCPACount / totalAllCPACount) * 100;
+    }
+
+    // Calculate average CPA per item
+    const avgCPAPerItem =
+      filteredItems.length > 0 ? totalCPACount / filteredItems.length : 0;
 
     return {
       totalCPACount,
-      totalUSDValue,
-      avgCPAValue,
-      totalItems: items.length,
+      totalEstimatedValue,
+      percentageOfTotal,
+      avgCPAPerItem,
+      itemCount: filteredItems.length,
+      totalItemCount: allItems.length,
     };
   };
 
-  const totals = calculateTotals(filteredItems);
-  const allTotals = calculateTotals(allItems);
-
-  // Calculate percentages of filtered vs all
-  const percentageOfCPAs =
-    allTotals.totalCPACount > 0
-      ? ((totals.totalCPACount / allTotals.totalCPACount) * 100).toFixed(1)
-      : "0";
-
-  const percentageOfValue =
-    allTotals.totalUSDValue > 0
-      ? ((totals.totalUSDValue / allTotals.totalUSDValue) * 100).toFixed(1)
-      : "0";
-
-  const percentageOfItems =
-    allTotals.totalItems > 0
-      ? ((totals.totalItems / allTotals.totalItems) * 100).toFixed(1)
-      : "0";
+  const metrics = calculateSummaryMetrics();
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12} sm={6} md={4}>
+    <Grid container spacing={{ xs: 2, md: 3 }}>
+      <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Total CPA Count</Typography>
-                <Tooltip title="Total number of CPAs across all filtered items">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<BarChart color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalCPACount.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfCPAs)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfCPAs}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <PersonAdd color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Total CPA Count</Typography>
+              <Tooltip title="Total number of CPAs across all trackers">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.totalCPACount.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              of total CPAs
+              {metrics.percentageOfTotal.toFixed(1)}% of total CPAs
             </Typography>
           </CardContent>
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={4}>
+      <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Estimated Value</Typography>
-                <Tooltip title="Estimated total value of CPAs (converted to USD)">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<AttachMoney color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              ${Math.round(totals.totalUSDValue).toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfValue)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfValue}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TouchApp color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Estimated Value</Typography>
+              <Tooltip title="Estimated monetary value of all CPAs (at $100 per CPA)">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              ${metrics.totalEstimatedValue.toLocaleString()}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              Avg. CPA Value: ${totals.avgCPAValue}
+              Avg. ${(metrics.avgCPAPerItem * 100).toFixed(0)} per item
             </Typography>
           </CardContent>
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={4}>
+      <Grid item xs={12} sm={6} md={3}>
         <Card elevation={2}>
-          <CardHeader
-            title={
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="subtitle1">Report Items</Typography>
-                <Tooltip title="Number of items in current view">
-                  <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                </Tooltip>
-              </Box>
-            }
-            avatar={<Paid color="primary" />}
-            sx={{ pb: 1 }}
-          />
           <CardContent>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {totals.totalItems.toLocaleString()}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", mt: 1, mb: 0.5 }}>
-              <LinearProgress
-                variant="determinate"
-                value={parseFloat(percentageOfItems)}
-                sx={{ flexGrow: 1, mr: 1, height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {percentageOfItems}%
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Visibility color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Average Per Item</Typography>
+              <Tooltip title="Average number of CPAs per tracker/item">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
             </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.avgCPAPerItem.toFixed(1)}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              of total report items
+              CPAs per tracker item
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid item xs={12} sm={6} md={3}>
+        <Card elevation={2}>
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TrendingUp color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1">Report Summary</Typography>
+              <Tooltip title="Number of items in the current filtered view vs. total">
+                <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+              </Tooltip>
+            </Box>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {metrics.itemCount.toLocaleString()}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              of {metrics.totalItemCount.toLocaleString()} total items (
+              {metrics.totalItemCount > 0
+                ? ((metrics.itemCount / metrics.totalItemCount) * 100).toFixed(
+                    1,
+                  )
+                : 0}
+              %)
             </Typography>
           </CardContent>
         </Card>
@@ -177,3 +152,5 @@ export function SummaryCard({ allItems, filteredItems }: SummaryCardProps) {
     </Grid>
   );
 }
+
+export default SummaryCard;

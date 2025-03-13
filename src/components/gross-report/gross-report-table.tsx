@@ -1,44 +1,30 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { GrossReportItem } from "./types";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
-  Box,
-  Chip,
   TablePagination,
+  Paper,
+  Chip,
+  Typography,
   LinearProgress,
-  Tooltip,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { TrendingUp, TrendingDown } from "@mui/icons-material";
 
 interface GrossReportTableProps {
   items: GrossReportItem[];
 }
 
-type SortField =
-  | "brand"
-  | "trackerId"
-  | "deduction"
-  | "adminFee"
-  | "username"
-  | "affiliate"
-  | "netRevenue"
-  | "profit"
-  | "lastUpdated";
-
-type SortDirection = "asc" | "desc";
-
 export function GrossReportTable({ items }: GrossReportTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<SortField>("lastUpdated");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<string>("netRevenue");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -51,7 +37,7 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
     setPage(0);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -60,6 +46,7 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
     }
   };
 
+  // Format currency
   const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -69,92 +56,59 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
+  // Get color based on performance
   const getPerformanceColor = (value: number) => {
     if (value > 10000) return "success.main";
     if (value < 3000) return "error.main";
     return "text.primary";
   };
 
-  // Sort and paginate items
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let comparison = 0;
+  // Sort items
+  const sortedItems = [...items].sort((a, b) => {
+    let comparison = 0;
 
-      switch (sortField) {
-        case "brand":
-          comparison = a.brand.localeCompare(b.brand);
-          break;
-        case "trackerId":
-          comparison = a.trackerId.localeCompare(b.trackerId);
-          break;
-        case "deduction":
-          comparison = a.deduction - b.deduction;
-          break;
-        case "adminFee":
-          comparison = a.adminFee - b.adminFee;
-          break;
-        case "username":
-          comparison = a.username.localeCompare(b.username);
-          break;
-        case "affiliate":
-          comparison = a.affiliate.localeCompare(b.affiliate);
-          break;
-        case "netRevenue":
-          comparison = a.netRevenue - b.netRevenue;
-          break;
-        case "profit":
-          comparison = a.profit - b.profit;
-          break;
-        case "lastUpdated":
-          comparison =
-            new Date(a.lastUpdated).getTime() -
-            new Date(b.lastUpdated).getTime();
-          break;
-        default:
-          comparison = 0;
-      }
+    switch (sortField) {
+      case "brand":
+        comparison = a.brand.localeCompare(b.brand);
+        break;
+      case "trackerId":
+        comparison = a.trackerId.localeCompare(b.trackerId);
+        break;
+      case "username":
+        comparison = a.username.localeCompare(b.username);
+        break;
+      case "affiliate":
+        comparison = a.affiliate.localeCompare(b.affiliate);
+        break;
+      case "deduction":
+        comparison = a.deduction - b.deduction;
+        break;
+      case "adminFee":
+        comparison = a.adminFee - b.adminFee;
+        break;
+      case "netRevenue":
+        comparison = a.netRevenue - b.netRevenue;
+        break;
+      case "profit":
+        comparison = a.profit - b.profit;
+        break;
+      default:
+        comparison = 0;
+    }
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [items, sortField, sortDirection]);
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
 
-  const paginatedItems = useMemo(() => {
-    return sortedItems.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
-  }, [sortedItems, page, rowsPerPage]);
+  // Paginate items
+  const paginatedItems = sortedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Find max values for visual indicators
-  const maxValues = useMemo(() => {
-    let maxNetRevenue = 0;
-    let maxProfit = 0;
-
-    items.forEach((item) => {
-      maxNetRevenue = Math.max(maxNetRevenue, item.netRevenue);
-      maxProfit = Math.max(maxProfit, item.profit);
-    });
-
-    return { maxNetRevenue, maxProfit };
-  }, [items]);
-
-  // Render sort indicator
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
+  const maxValues = {
+    maxNetRevenue: Math.max(...items.map((item) => item.netRevenue), 1),
+    maxProfit: Math.max(...items.map((item) => item.profit), 1),
   };
 
   return (
@@ -168,7 +122,19 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  BRAND {renderSortIcon("brand")}
+                  Brand
+                  {sortField === "brand" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -176,7 +142,59 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                 sx={{ cursor: "pointer" }}
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  TRACKER ID {renderSortIcon("trackerId")}
+                  Tracker ID
+                  {sortField === "trackerId" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
+                </Box>
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort("username")}
+                sx={{ cursor: "pointer" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  Username
+                  {sortField === "username" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
+                </Box>
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort("affiliate")}
+                sx={{ cursor: "pointer" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  Affiliate
+                  {sortField === "affiliate" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -191,7 +209,19 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  DEDUCTION {renderSortIcon("deduction")}
+                  Deduction
+                  {sortField === "deduction" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -206,23 +236,19 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  ADMIN FEE {renderSortIcon("adminFee")}
-                </Box>
-              </TableCell>
-              <TableCell
-                onClick={() => handleSort("username")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  USERNAME {renderSortIcon("username")}
-                </Box>
-              </TableCell>
-              <TableCell
-                onClick={() => handleSort("affiliate")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  AFFILIATE {renderSortIcon("affiliate")}
+                  Admin Fee
+                  {sortField === "adminFee" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -237,7 +263,19 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  NET REVENUE {renderSortIcon("netRevenue")}
+                  Net Revenue
+                  {sortField === "netRevenue" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
               <TableCell
@@ -252,35 +290,37 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                     justifyContent: "flex-end",
                   }}
                 >
-                  PROFIT {renderSortIcon("profit")}
+                  Profit
+                  {sortField === "profit" && (
+                    <TrendingUp
+                      fontSize="small"
+                      sx={{
+                        ml: 0.5,
+                        transform:
+                          sortDirection === "desc"
+                            ? "rotate(0deg)"
+                            : "rotate(180deg)",
+                      }}
+                    />
+                  )}
                 </Box>
               </TableCell>
-              <TableCell>CURRENCY</TableCell>
-              <TableCell
-                onClick={() => handleSort("lastUpdated")}
-                sx={{ cursor: "pointer" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  LAST UPDATED {renderSortIcon("lastUpdated")}
-                </Box>
-              </TableCell>
+              <TableCell>Currency</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No results found.
+                    No gross report items found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedItems.map((item) => (
                 <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography fontWeight="medium">{item.brand}</Typography>
-                  </TableCell>
+                  <TableCell>{item.brand}</TableCell>
                   <TableCell>
                     <Chip
                       label={item.trackerId}
@@ -292,27 +332,15 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                       }}
                     />
                   </TableCell>
-                  <TableCell align="right">
-                    <Typography color="error.main">
-                      {formatCurrency(item.deduction, item.currency)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography color="warning.main">
-                      {formatCurrency(item.adminFee, item.currency)}
-                    </Typography>
-                  </TableCell>
                   <TableCell>
-                    <Typography>{item.username}</Typography>
+                    <Typography fontWeight="medium">{item.username}</Typography>
                   </TableCell>
-                  <TableCell>
-                    <Tooltip
-                      title={`Affiliate ID: ${item.affiliateId || "N/A"}`}
-                    >
-                      <Typography fontWeight="medium" color="primary.main">
-                        {item.affiliate}
-                      </Typography>
-                    </Tooltip>
+                  <TableCell>{item.affiliate}</TableCell>
+                  <TableCell align="right">
+                    {formatCurrency(item.deduction, item.currency)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatCurrency(item.adminFee, item.currency)}
                   </TableCell>
                   <TableCell align="right">
                     <Box>
@@ -340,34 +368,47 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                      }}
+                    >
                       <Typography
                         color={getPerformanceColor(item.profit)}
                         fontWeight="medium"
+                        sx={{ display: "flex", alignItems: "center" }}
                       >
+                        {item.profit > item.netRevenue * 0.5 ? (
+                          <TrendingUp
+                            fontSize="small"
+                            sx={{ mr: 0.5, color: "success.main" }}
+                          />
+                        ) : item.profit < item.netRevenue * 0.3 ? (
+                          <TrendingDown
+                            fontSize="small"
+                            sx={{ mr: 0.5, color: "error.main" }}
+                          />
+                        ) : null}
                         {formatCurrency(item.profit, item.currency)}
                       </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={(item.profit / maxValues.maxProfit) * 100}
-                        sx={{
-                          height: 4,
-                          borderRadius: 2,
-                          mt: 0.5,
-                          bgcolor: "rgba(0,0,0,0.05)",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: getPerformanceColor(item.profit),
-                          },
-                        }}
-                      />
                     </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={(item.profit / maxValues.maxProfit) * 100}
+                      sx={{
+                        height: 4,
+                        borderRadius: 2,
+                        mt: 0.5,
+                        bgcolor: "rgba(0,0,0,0.05)",
+                        "& .MuiLinearProgress-bar": {
+                          bgcolor: getPerformanceColor(item.profit),
+                        },
+                      }}
+                    />
                   </TableCell>
                   <TableCell>{item.currency}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDate(item.lastUpdated)}
-                    </Typography>
-                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -386,3 +427,5 @@ export function GrossReportTable({ items }: GrossReportTableProps) {
     </>
   );
 }
+
+export default GrossReportTable;

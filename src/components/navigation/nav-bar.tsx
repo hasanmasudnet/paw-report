@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from "react";
 import {
   AppBar,
   Toolbar,
@@ -7,102 +6,40 @@ import {
   Button,
   Box,
   Container,
-  Tabs,
-  Tab,
 } from "@mui/material";
-import {
-  BarChart,
-  PieChart,
-  Groups,
-  Traffic,
-  Assessment,
-  Percent,
-} from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
 
-export default function NavBar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [value, setValue] = useState(location.pathname);
-
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
-    setValue(newValue);
-    navigate(newValue);
-  };
-
+function NavBar() {
   return (
-    <AppBar position="static" color="default" elevation={1}>
+    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
       <Container maxWidth="xl">
-        <Toolbar disableGutters>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography
             variant="h6"
-            noWrap
-            component="div"
-            sx={{ mr: 4, display: { xs: "none", md: "flex" } }}
+            component={RouterLink}
+            to="/"
+            sx={{ color: "white", textDecoration: "none" }}
           >
-            Affiliate Analytics
+            Affiliate Dashboard
           </Typography>
-
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              aria-label="navigation tabs"
-              indicatorColor="primary"
-              textColor="primary"
-              variant="scrollable"
-              scrollButtons="auto"
-            >
-              <Tab
-                label="Gross Report"
-                value="/"
-                icon={<PieChart />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Sub-Affiliate Report"
-                value="/sub-affiliate-report"
-                icon={<Groups />}
-                iconPosition="start"
-              />
-
-              <Tab
-                label="Traffic Report"
-                value="/traffic-report"
-                icon={<Traffic />}
-                iconPosition="start"
-              />
-              <Tab
-                label="CPA Report"
-                value="/cpa-report"
-                icon={<Assessment />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Revenue Share"
-                value="/revenue-share"
-                icon={<Percent />}
-                iconPosition="start"
-              />
-            </Tabs>
-          </Box>
-
-          <Box sx={{ display: { xs: "flex", md: "none" }, flexGrow: 1 }}>
-            <Button onClick={() => navigate("/")} color="inherit">
-              Reports
+          <Box>
+            <Button color="inherit" component={RouterLink} to="/">
+              Gross Report
             </Button>
             <Button
-              onClick={() => navigate("/sub-affiliate-report")}
               color="inherit"
+              component={RouterLink}
+              to="/sub-affiliate-report"
             >
               Sub-Affiliates
             </Button>
-            <Button onClick={() => navigate("/traffic-report")} color="inherit">
-              Traffic
+            <Button color="inherit" component={RouterLink} to="/traffic-report">
+              Traffic Report
             </Button>
-            <Button onClick={() => navigate("/cpa-report")} color="inherit">
-              CPA
+            <Button color="inherit" component={RouterLink} to="/cpa-report">
+              CPA Report
             </Button>
-            <Button onClick={() => navigate("/revenue-share")} color="inherit">
+            <Button color="inherit" component={RouterLink} to="/revenue-share">
               Revenue Share
             </Button>
           </Box>
@@ -111,3 +48,5 @@ export default function NavBar() {
     </AppBar>
   );
 }
+
+export default NavBar;

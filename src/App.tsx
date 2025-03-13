@@ -13,26 +13,24 @@ import { Box } from "@mui/material";
 function App() {
   return (
     <Suspense fallback={<p>Loading...</p>}>
-      <>
-        <NavBar />
-        <Box sx={{ mt: 2 }}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/sub-affiliate-report"
-              element={<SubAffiliateReport />}
-            />
+      <NavBar />
+      <Box sx={{ mt: 2 }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/sub-affiliate-report"
+            element={<SubAffiliateReport />}
+          />
 
-            <Route path="/traffic-report" element={<TrafficReport />} />
-            <Route path="/cpa-report" element={<CPAReport />} />
-            <Route path="/revenue-share" element={<RevenueShare />} />
-            {import.meta.env.VITE_TEMPO === "true" && (
-              <Route path="/tempobook/*" />
-            )}
-          </Routes>
-          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-        </Box>
-      </>
+          <Route path="/traffic-report" element={<TrafficReport />} />
+          <Route path="/cpa-report" element={<CPAReport />} />
+          <Route path="/revenue-share" element={<RevenueShare />} />
+          {import.meta.env.VITE_TEMPO === "true" && (
+            <Route path="/tempobook/*" />
+          )}
+        </Routes>
+        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+      </Box>
     </Suspense>
   );
 }
