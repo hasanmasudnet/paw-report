@@ -1,5 +1,19 @@
 import { Affiliate } from "./types";
 
+// Generate some affiliate company names for filtering
+const affiliateCompanies = [
+  "MarketingPros",
+  "DigitalPartners",
+  "ClickMasters",
+  "ConversionKings",
+  "TrafficExperts",
+  "LeadGenerators",
+  "SalesBoost",
+  "PromotionPros",
+  "ReferralGurus",
+  "AffiliateOne",
+];
+
 // Generate 1500 sample affiliates with different combinations
 function generateMockData(count: number): Affiliate[] {
   const brands = [
@@ -97,7 +111,7 @@ function generateMockData(count: number): Affiliate[] {
       usernameSuffixes[Math.floor(Math.random() * usernameSuffixes.length)];
     const username = `${usernamePrefix}${usernameSuffix}${Math.floor(Math.random() * 1000)}`;
 
-    // Create affiliate
+    // Assign an affiliate company
     const affiliate: Affiliate = {
       id: `aff-${i + 1}`,
       username,
@@ -109,6 +123,10 @@ function generateMockData(count: number): Affiliate[] {
       cpaCommission,
       profit,
       currency,
+      affiliate:
+        affiliateCompanies[
+          Math.floor(Math.random() * affiliateCompanies.length)
+        ],
       subAffiliates: [],
     };
 
@@ -158,3 +176,6 @@ export const mockAffiliates: Affiliate[] = generateMockData(1500);
 export const brands = [...new Set(mockAffiliates.map((a) => a.brand))];
 export const categories = [...new Set(mockAffiliates.map((a) => a.category))];
 export const dealTypes = [...new Set(mockAffiliates.map((a) => a.dealType))];
+
+// Export the affiliate companies
+export { affiliateCompanies };

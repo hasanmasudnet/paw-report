@@ -39,7 +39,8 @@ type SortField =
   | "grossRevenue"
   | "commission"
   | "cpaCommission"
-  | "profit";
+  | "profit"
+  | "affiliate";
 type SortDirection = "asc" | "desc";
 
 export function AffiliateTable({ affiliates }: AffiliateTableProps) {
@@ -155,6 +156,9 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
         case "profit":
           comparison = a.profit - b.profit;
           break;
+        case "affiliate":
+          comparison = (a.affiliate || "").localeCompare(b.affiliate || "");
+          break;
         default:
           comparison = 0;
       }
@@ -224,6 +228,14 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
               >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   Category {renderSortIcon("category")}
+                </Box>
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort("affiliate")}
+                sx={{ cursor: "pointer" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  Affiliate Company {renderSortIcon("affiliate")}
                 </Box>
               </TableCell>
               <TableCell
@@ -345,6 +357,11 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                     </TableCell>
                     <TableCell>{affiliate.brand}</TableCell>
                     <TableCell>{affiliate.category}</TableCell>
+                    <TableCell>
+                      <Typography color="primary.main" fontWeight="medium">
+                        {affiliate.affiliate || "N/A"}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={affiliate.dealType}
@@ -532,6 +549,14 @@ export function AffiliateTable({ affiliates }: AffiliateTableProps) {
                                       color="text.secondary"
                                     >
                                       {subAffiliate.category}
+                                    </Typography>
+                                  </TableCell>
+                                  <TableCell sx={{ borderBottom: "none" }}>
+                                    <Typography
+                                      variant="body2"
+                                      color="primary.main"
+                                    >
+                                      {affiliate.affiliate || "N/A"}
                                     </Typography>
                                   </TableCell>
                                   <TableCell sx={{ borderBottom: "none" }}>

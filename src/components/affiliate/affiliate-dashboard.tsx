@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { mockAffiliates, brands, categories, dealTypes } from "./mock-data";
+import {
+  mockAffiliates,
+  brands,
+  categories,
+  dealTypes,
+  affiliateCompanies,
+} from "./mock-data";
 import { Affiliate, FilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
@@ -16,6 +22,7 @@ function AffiliateDashboard() {
     dealType: "",
     affiliateUsername: "",
     subAffiliateUsername: "",
+    affiliate: "",
   });
 
   // Apply filters whenever filters state changes
@@ -80,6 +87,11 @@ function AffiliateDashboard() {
           return false;
         }
 
+        // Filter by affiliate company
+        if (filters.affiliate && affiliate.affiliate !== filters.affiliate) {
+          return false;
+        }
+
         // Filter by revenue range
         if (
           (filters.minRevenue !== undefined &&
@@ -123,6 +135,7 @@ function AffiliateDashboard() {
       dealType: "",
       affiliateUsername: "",
       subAffiliateUsername: "",
+      affiliate: "",
     });
   };
 
@@ -150,6 +163,7 @@ function AffiliateDashboard() {
           brands={brands}
           categories={categories}
           dealTypes={dealTypes}
+          affiliateCompanies={affiliateCompanies}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}

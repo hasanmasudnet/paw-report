@@ -10,6 +10,7 @@ export interface Affiliate {
   profit: number;
   currency: string; // USD, EUR, GBP, CAD, AUD
   subAffiliates: SubAffiliate[];
+  affiliate?: string; // Affiliate company name
 }
 
 export interface SubAffiliate {
@@ -36,6 +37,7 @@ export interface FilterOptions {
   maxRevenue?: number;
   minCommissionRate?: number;
   maxCommissionRate?: number;
+  affiliate?: string;
 }
 
 export interface DealTypeMetrics {

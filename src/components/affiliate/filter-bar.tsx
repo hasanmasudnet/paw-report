@@ -33,6 +33,7 @@ interface FilterBarProps {
   brands: string[];
   categories: string[];
   dealTypes: string[];
+  affiliateCompanies: string[];
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
   onResetFilters: () => void;
@@ -42,6 +43,7 @@ export function FilterBar({
   brands,
   categories,
   dealTypes,
+  affiliateCompanies,
   filters,
   onFilterChange,
   onResetFilters,
@@ -90,6 +92,13 @@ export function FilterBar({
     onFilterChange({
       ...filters,
       subAffiliateUsername: event.target.value,
+    });
+  };
+
+  const handleAffiliateChange = (event: SelectChangeEvent) => {
+    onFilterChange({
+      ...filters,
+      affiliate: event.target.value,
     });
   };
 
@@ -325,6 +334,31 @@ export function FilterBar({
           >
             Reset Filters
           </Button>
+        </Grid>
+
+        {/* Affiliate Company Filter */}
+        <Grid item xs={12} md={6} lg={4}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="affiliate-select-label">
+              Affiliate Company
+            </InputLabel>
+            <Select
+              labelId="affiliate-select-label"
+              id="affiliate-select"
+              value={filters.affiliate || ""}
+              label="Affiliate Company"
+              onChange={handleAffiliateChange}
+            >
+              <MenuItem value="">
+                <em>All Affiliate Companies</em>
+              </MenuItem>
+              {affiliateCompanies.map((company) => (
+                <MenuItem key={company} value={company}>
+                  {company}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Grid>
 
         {/* Advanced filters */}
