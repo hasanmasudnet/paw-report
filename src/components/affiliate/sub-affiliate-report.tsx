@@ -126,31 +126,6 @@ function SubAffiliateReport() {
         return false;
       }
 
-      // Filter by revenue range
-      if (
-        (filters.minRevenue !== undefined &&
-          subAffiliate.grossRevenue < filters.minRevenue) ||
-        (filters.maxRevenue !== undefined &&
-          subAffiliate.grossRevenue > filters.maxRevenue)
-      ) {
-        return false;
-      }
-
-      // Filter by commission rate range
-      const commissionRate =
-        subAffiliate.grossRevenue > 0
-          ? (subAffiliate.commission / subAffiliate.grossRevenue) * 100
-          : 0;
-
-      if (
-        (filters.minCommissionRate !== undefined &&
-          commissionRate < filters.minCommissionRate) ||
-        (filters.maxCommissionRate !== undefined &&
-          commissionRate > filters.maxCommissionRate)
-      ) {
-        return false;
-      }
-
       return true;
     });
 
@@ -405,6 +380,17 @@ function SubAffiliateReport() {
       </Box>
 
       <Stack spacing={3}>
+        {/* Filter Bar */}
+        <FilterBar
+          brands={brands}
+          categories={categories}
+          dealTypes={dealTypes}
+          affiliateCompanies={affiliateCompanies}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+        />
+
         {/* Summary Cards */}
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
@@ -495,17 +481,6 @@ function SubAffiliateReport() {
             </Card>
           </Grid>
         </Grid>
-
-        {/* Filter Bar */}
-        <FilterBar
-          brands={brands}
-          categories={categories}
-          dealTypes={dealTypes}
-          affiliateCompanies={affiliateCompanies}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onResetFilters={handleResetFilters}
-        />
 
         {/* Sub-Affiliate Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>

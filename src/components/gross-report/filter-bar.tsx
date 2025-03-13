@@ -40,15 +40,15 @@ export function FilterBar({
   onResetFilters,
 }: FilterBarProps) {
   return (
-    <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-      <Grid container spacing={3}>
+    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+      <Grid container spacing={2}>
         {/* Header and title */}
         <Grid item xs={12}>
           <Box
             display="flex"
             alignItems="center"
             justifyContent="space-between"
-            mb={2}
+            mb={1}
           >
             <Box display="flex" alignItems="center">
               <FilterAlt color="primary" sx={{ mr: 1 }} />
@@ -59,190 +59,192 @@ export function FilterBar({
           </Box>
         </Grid>
 
-        {/* Basic filters */}
-        <Grid item xs={12} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="year-select-label">Year</InputLabel>
-            <Select
-              labelId="year-select-label"
-              id="year-select"
-              value={filters.year}
-              label="Year"
-              onChange={(e) =>
+        {/* All search boxes in one row */}
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="year-select-label">Year</InputLabel>
+              <Select
+                labelId="year-select-label"
+                id="year-select"
+                value={filters.year}
+                label="Year"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    year: e.target.value,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Years</em>
+                </MenuItem>
+                {years.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ flex: 1, minWidth: 150 }}>
+              <InputLabel id="month-select-label">Month</InputLabel>
+              <Select
+                labelId="month-select-label"
+                id="month-select"
+                value={filters.month}
+                label="Month"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    month: e.target.value,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Months</em>
+                </MenuItem>
+                {months.map((month) => (
+                  <MenuItem key={month.value} value={month.value}>
+                    {month.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Autocomplete
+              id="brand-select"
+              options={brands}
+              value={filters.brand || null}
+              onChange={(event, newValue) => {
                 onFilterChange({
                   ...filters,
-                  year: e.target.value,
-                })
-              }
-            >
-              <MenuItem value="">
-                <em>All Years</em>
-              </MenuItem>
-              {years.map((year) => (
-                <MenuItem key={year} value={year}>
-                  {year}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+                  brand: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Brand"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
 
-        <Grid item xs={12} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="month-select-label">Month</InputLabel>
-            <Select
-              labelId="month-select-label"
-              id="month-select"
-              value={filters.month}
-              label="Month"
-              onChange={(e) =>
-                onFilterChange({
-                  ...filters,
-                  month: e.target.value,
-                })
-              }
-            >
-              <MenuItem value="">
-                <em>All Months</em>
-              </MenuItem>
-              {months.map((month) => (
-                <MenuItem key={month.value} value={month.value}>
-                  {month.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={4} lg={2}>
-          <Autocomplete
-            id="brand-select"
-            options={brands}
-            value={filters.brand || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                brand: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Brand"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="tracker-select-label">Tracker ID</InputLabel>
-            <Select
-              labelId="tracker-select-label"
+            <Autocomplete
               id="tracker-select"
-              value={filters.trackerId}
-              label="Tracker ID"
+              options={trackerIds}
+              value={filters.trackerId || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  trackerId: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Tracker ID"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+
+            <TextField
+              size="small"
+              label="Username"
+              value={filters.username || ""}
               onChange={(e) =>
                 onFilterChange({
                   ...filters,
-                  trackerId: e.target.value,
+                  username: e.target.value,
                 })
               }
-            >
-              <MenuItem value="">
-                <em>All Trackers</em>
-              </MenuItem>
-              {trackerIds.map((trackerId) => (
-                <MenuItem key={trackerId} value={trackerId}>
-                  {trackerId}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              placeholder="Search by username..."
+              sx={{ flex: 1, minWidth: 180 }}
+            />
 
-        <Grid item xs={12} md={4} lg={3}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Username"
-            value={filters.username || ""}
-            onChange={(e) =>
-              onFilterChange({
-                ...filters,
-                username: e.target.value,
-              })
-            }
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            placeholder="Search by username..."
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4} lg={3}>
-          <Autocomplete
-            id="affiliate-name-select"
-            options={affiliateNames}
-            value={filters.affiliate || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                affiliate: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Affiliate"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
+            <Autocomplete
+              id="affiliate-name-select"
+              options={affiliateNames}
+              value={filters.affiliate || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  affiliate: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Affiliate"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+          </Box>
         </Grid>
 
         {/* Reset button */}
         <Grid
           item
           xs={12}
-          sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}
         >
           <Button
             variant="outlined"

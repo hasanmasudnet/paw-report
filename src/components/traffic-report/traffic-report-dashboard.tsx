@@ -107,9 +107,6 @@ function TrafficReportDashboard() {
       </Box>
 
       <Stack spacing={3}>
-        {/* Summary Cards */}
-        <SummaryCard allItems={items} filteredItems={filteredItems} />
-
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -118,6 +115,9 @@ function TrafficReportDashboard() {
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
+
+        {/* Summary Cards */}
+        <SummaryCard allItems={items} filteredItems={filteredItems} />
 
         {/* Traffic Report Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>

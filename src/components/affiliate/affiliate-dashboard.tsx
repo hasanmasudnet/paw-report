@@ -161,12 +161,6 @@ function AffiliateDashboard() {
       </Box>
 
       <Stack spacing={3}>
-        {/* Summary Cards */}
-        <SummaryCard
-          affiliates={affiliates}
-          filteredAffiliates={filteredAffiliates}
-        />
-
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -176,6 +170,12 @@ function AffiliateDashboard() {
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
+        />
+
+        {/* Summary Cards */}
+        <SummaryCard
+          affiliates={affiliates}
+          filteredAffiliates={filteredAffiliates}
         />
 
         {/* Affiliate Table */}

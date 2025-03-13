@@ -39,13 +39,6 @@ export function FilterBar({
   onFilterChange,
   onResetFilters,
 }: FilterBarProps) {
-  const [revenueRange, setRevenueRange] = React.useState<[number, number]>([
-    0, 50000,
-  ]);
-  const [commissionRateRange, setCommissionRateRange] = React.useState<
-    [number, number]
-  >([0, 30]);
-
   const handleAffiliateUsernameChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -61,44 +54,6 @@ export function FilterBar({
     onFilterChange({
       ...filters,
       subAffiliateUsername: event.target.value,
-    });
-  };
-
-  const handleRevenueRangeChange = (
-    event: Event,
-    newValue: number | number[],
-  ) => {
-    setRevenueRange(newValue as [number, number]);
-  };
-
-  const handleRevenueRangeChangeCommitted = (
-    event: Event | React.SyntheticEvent,
-    newValue: number | number[],
-  ) => {
-    const [min, max] = newValue as [number, number];
-    onFilterChange({
-      ...filters,
-      minRevenue: min,
-      maxRevenue: max === 50000 ? undefined : max,
-    });
-  };
-
-  const handleCommissionRateRangeChange = (
-    event: Event,
-    newValue: number | number[],
-  ) => {
-    setCommissionRateRange(newValue as [number, number]);
-  };
-
-  const handleCommissionRateRangeChangeCommitted = (
-    event: Event | React.SyntheticEvent,
-    newValue: number | number[],
-  ) => {
-    const [min, max] = newValue as [number, number];
-    onFilterChange({
-      ...filters,
-      minCommissionRate: min,
-      maxCommissionRate: max === 30 ? undefined : max,
     });
   };
 
@@ -120,15 +75,15 @@ export function FilterBar({
   };
 
   return (
-    <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-      <Grid container spacing={3}>
+    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+      <Grid container spacing={2}>
         {/* Header and title */}
         <Grid item xs={12}>
           <Box
             display="flex"
             alignItems="center"
             justifyContent="space-between"
-            mb={2}
+            mb={1}
           >
             <Box display="flex" alignItems="center">
               <FilterAlt color="primary" sx={{ mr: 1 }} />
@@ -139,271 +94,183 @@ export function FilterBar({
           </Box>
         </Grid>
 
-        {/* Dropdown filters */}
-        <Grid item xs={12} md={4} lg={3}>
-          <Autocomplete
-            id="brand-select"
-            options={brands}
-            value={filters.brand || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                brand: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Brand"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4} lg={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="category-select-label">Category</InputLabel>
-            <Select
-              labelId="category-select-label"
-              id="category-select"
-              value={filters.category}
-              label="Category"
-              onChange={(e) =>
+        {/* All search boxes in one row */}
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <Autocomplete
+              id="brand-select"
+              options={brands}
+              value={filters.brand || null}
+              onChange={(event, newValue) => {
                 onFilterChange({
                   ...filters,
-                  category: e.target.value,
-                })
-              }
-            >
-              <MenuItem value="">
-                <em>All Categories</em>
-              </MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={4} lg={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="deal-type-select-label">Deal Type</InputLabel>
-            <Select
-              labelId="deal-type-select-label"
-              id="deal-type-select"
-              value={filters.dealType}
-              label="Deal Type"
-              onChange={(e) =>
-                onFilterChange({
-                  ...filters,
-                  dealType: e.target.value,
-                })
-              }
-              renderValue={(selected) => (
-                <Chip
-                  label={selected}
+                  brand: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Brand"
                   size="small"
-                  sx={{
-                    bgcolor: selected
-                      ? getDealTypeChipColor(selected).bg
-                      : undefined,
-                    color: selected
-                      ? getDealTypeChipColor(selected).color
-                      : undefined,
-                    fontWeight: "medium",
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
                   }}
                 />
               )}
-            >
-              <MenuItem value="">
-                <em>All Deal Types</em>
-              </MenuItem>
-              {dealTypes.map((dealType) => (
-                <MenuItem key={dealType} value={dealType}>
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+
+            <FormControl size="small" sx={{ flex: 1, minWidth: 180 }}>
+              <InputLabel id="category-select-label">Category</InputLabel>
+              <Select
+                labelId="category-select-label"
+                id="category-select"
+                value={filters.category}
+                label="Category"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    category: e.target.value,
+                  })
+                }
+              >
+                <MenuItem value="">
+                  <em>All Categories</em>
+                </MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ flex: 1, minWidth: 180 }}>
+              <InputLabel id="deal-type-select-label">Deal Type</InputLabel>
+              <Select
+                labelId="deal-type-select-label"
+                id="deal-type-select"
+                value={filters.dealType}
+                label="Deal Type"
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    dealType: e.target.value,
+                  })
+                }
+                renderValue={(selected) => (
                   <Chip
-                    label={dealType}
+                    label={selected}
                     size="small"
                     sx={{
-                      bgcolor: getDealTypeChipColor(dealType).bg,
-                      color: getDealTypeChipColor(dealType).color,
+                      bgcolor: selected
+                        ? getDealTypeChipColor(selected).bg
+                        : undefined,
+                      color: selected
+                        ? getDealTypeChipColor(selected).color
+                        : undefined,
                       fontWeight: "medium",
                     }}
                   />
+                )}
+              >
+                <MenuItem value="">
+                  <em>All Deal Types</em>
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+                {dealTypes.map((dealType) => (
+                  <MenuItem key={dealType} value={dealType}>
+                    <Chip
+                      label={dealType}
+                      size="small"
+                      sx={{
+                        bgcolor: getDealTypeChipColor(dealType).bg,
+                        color: getDealTypeChipColor(dealType).color,
+                        fontWeight: "medium",
+                      }}
+                    />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        {/* Search fields */}
-        <Grid item xs={12} md={6} lg={4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Affiliate Username"
-            value={filters.affiliateUsername || ""}
-            onChange={handleAffiliateUsernameChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            placeholder="Search affiliates..."
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Sub-Affiliate Username"
-            value={filters.subAffiliateUsername || ""}
-            onChange={handleSubAffiliateUsernameChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            placeholder="Search sub-affiliates..."
-          />
-        </Grid>
-
-        {/* Affiliate Company Filter */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Autocomplete
-            id="affiliate-select"
-            options={affiliateCompanies}
-            value={filters.affiliate || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                affiliate: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Affiliate Company"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
-        </Grid>
-
-        {/* Revenue Range */}
-        <Grid item xs={12} md={6}>
-          <Box display="flex" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              Revenue Range
-            </Typography>
-            <Tooltip title="Filter affiliates by their gross revenue amount">
-              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-            </Tooltip>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={revenueRange}
-              onChange={handleRevenueRangeChange}
-              onChangeCommitted={handleRevenueRangeChangeCommitted}
-              valueLabelDisplay="auto"
-              min={0}
-              max={50000}
-              step={1000}
-              valueLabelFormat={(value) => `${value.toLocaleString()}`}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mt: 1,
+            <TextField
+              size="small"
+              label="Affiliate Username"
+              value={filters.affiliateUsername || ""}
+              onChange={handleAffiliateUsernameChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
               }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                ${revenueRange[0].toLocaleString()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                ${revenueRange[1].toLocaleString()}
-                {revenueRange[1] === 50000 ? "+" : ""}
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
-
-        {/* Commission Rate */}
-        <Grid item xs={12} md={6}>
-          <Box display="flex" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              Commission Rate
-            </Typography>
-            <Tooltip title="Filter affiliates by their commission rate percentage">
-              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-            </Tooltip>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={commissionRateRange}
-              onChange={handleCommissionRateRangeChange}
-              onChangeCommitted={handleCommissionRateRangeChangeCommitted}
-              valueLabelDisplay="auto"
-              min={0}
-              max={30}
-              step={1}
-              valueLabelFormat={(value) => `${value}%`}
+              placeholder="Search affiliates..."
+              sx={{ flex: 1, minWidth: 180 }}
             />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mt: 1,
+
+            <TextField
+              size="small"
+              label="Sub-Affiliate Username"
+              value={filters.subAffiliateUsername || ""}
+              onChange={handleSubAffiliateUsernameChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
               }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {commissionRateRange[0]}%
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {commissionRateRange[1]}%
-                {commissionRateRange[1] === 30 ? "+" : ""}
-              </Typography>
-            </Box>
+              placeholder="Search sub-affiliates..."
+              sx={{ flex: 1, minWidth: 180 }}
+            />
+
+            <Autocomplete
+              id="affiliate-select"
+              options={affiliateCompanies}
+              value={filters.affiliate || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  affiliate: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Affiliate Company"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
           </Box>
         </Grid>
 
@@ -411,7 +278,7 @@ export function FilterBar({
         <Grid
           item
           xs={12}
-          sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}
         >
           <Button
             variant="outlined"

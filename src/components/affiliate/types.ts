@@ -33,10 +33,6 @@ export interface FilterOptions {
   dealType: string;
   affiliateUsername: string;
   subAffiliateUsername: string;
-  minRevenue?: number;
-  maxRevenue?: number;
-  minCommissionRate?: number;
-  maxCommissionRate?: number;
   affiliate?: string;
 }
 

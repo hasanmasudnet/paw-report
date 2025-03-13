@@ -83,9 +83,6 @@ function CPAReportDashboard() {
       </Box>
 
       <Stack spacing={3}>
-        {/* Summary Cards */}
-        <SummaryCard allItems={items} filteredItems={filteredItems} />
-
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -95,6 +92,9 @@ function CPAReportDashboard() {
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
+
+        {/* Summary Cards */}
+        <SummaryCard allItems={items} filteredItems={filteredItems} />
 
         {/* CPA Report Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>

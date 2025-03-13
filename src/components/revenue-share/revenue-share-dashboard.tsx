@@ -110,9 +110,6 @@ function RevenueShareDashboard() {
       </Box>
 
       <Stack spacing={3}>
-        {/* Summary Cards */}
-        <SummaryCard allItems={items} filteredItems={filteredItems} />
-
         {/* Filter Bar */}
         <FilterBar
           brands={brands}
@@ -123,6 +120,9 @@ function RevenueShareDashboard() {
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
+
+        {/* Summary Cards */}
+        <SummaryCard allItems={items} filteredItems={filteredItems} />
 
         {/* Revenue Share Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TrafficReportFilterOptions } from "./types";
 import {
   Box,
@@ -15,6 +15,7 @@ import {
   Slider,
   Tooltip,
   Autocomplete,
+  Collapse,
 } from "@mui/material";
 import {
   FilterAlt,
@@ -39,6 +40,7 @@ export function FilterBar({
   onFilterChange,
   onResetFilters,
 }: FilterBarProps) {
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [impressionsRange, setImpressionsRange] = React.useState<
     [number, number]
   >([0, 100000]);
@@ -107,15 +109,15 @@ export function FilterBar({
   };
 
   return (
-    <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-      <Grid container spacing={3}>
+    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+      <Grid container spacing={2}>
         {/* Header and title */}
         <Grid item xs={12}>
           <Box
             display="flex"
             alignItems="center"
             justifyContent="space-between"
-            mb={2}
+            mb={1}
           >
             <Box display="flex" alignItems="center">
               <FilterAlt color="primary" sx={{ mr: 1 }} />
@@ -123,78 +125,91 @@ export function FilterBar({
                 Filter Traffic Report
               </Typography>
             </Box>
+            <Button
+              size="small"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              {showAdvancedFilters
+                ? "Hide Advanced Filters"
+                : "Show Advanced Filters"}
+            </Button>
           </Box>
         </Grid>
 
-        {/* Basic filters */}
-        <Grid item xs={12} md={4}>
-          <Autocomplete
-            id="brand-select"
-            options={brands}
-            value={filters.brand || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                brand: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Brand"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="tracker-select-label">Tracker ID</InputLabel>
-            <Select
-              labelId="tracker-select-label"
-              id="tracker-select"
-              value={filters.trackerId}
-              label="Tracker ID"
-              onChange={(e) =>
+        {/* Basic filters in one line */}
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <Autocomplete
+              id="brand-select"
+              options={brands}
+              value={filters.brand || null}
+              onChange={(event, newValue) => {
                 onFilterChange({
                   ...filters,
-                  trackerId: e.target.value,
-                })
-              }
-            >
-              <MenuItem value="">
-                <em>All Trackers</em>
-              </MenuItem>
-              {trackerIds.map((trackerId) => (
-                <MenuItem key={trackerId} value={trackerId}>
-                  {trackerId}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+                  brand: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Brand"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
 
-        <Grid item xs={12} md={4}>
-          <Box sx={{ display: "flex", gap: 2 }}>
+            <Autocomplete
+              id="tracker-select"
+              options={trackerIds}
+              value={filters.trackerId || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  trackerId: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Tracker ID"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+
             <TextField
-              fullWidth
               size="small"
               label="Start Date"
               type="date"
@@ -213,9 +228,9 @@ export function FilterBar({
                 ),
               }}
               InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 180 }}
             />
             <TextField
-              fullWidth
               size="small"
               label="End Date"
               type="date"
@@ -227,122 +242,8 @@ export function FilterBar({
                 })
               }
               InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 180 }}
             />
-          </Box>
-        </Grid>
-
-        {/* Range filters */}
-        <Grid item xs={12} md={4}>
-          <Box display="flex" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              Impressions Range
-            </Typography>
-            <Tooltip title="Filter by number of impressions">
-              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-            </Tooltip>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={impressionsRange}
-              onChange={handleImpressionsRangeChange}
-              onChangeCommitted={handleImpressionsRangeChangeCommitted}
-              valueLabelDisplay="auto"
-              min={0}
-              max={100000}
-              step={1000}
-              valueLabelFormat={(value) => `${value.toLocaleString()}`}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mt: 1,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {impressionsRange[0].toLocaleString()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {impressionsRange[1].toLocaleString()}
-                {impressionsRange[1] === 100000 ? "+" : ""}
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Box display="flex" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              Clicks Range
-            </Typography>
-            <Tooltip title="Filter by number of clicks">
-              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-            </Tooltip>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={clicksRange}
-              onChange={handleClicksRangeChange}
-              onChangeCommitted={handleClicksRangeChangeCommitted}
-              valueLabelDisplay="auto"
-              min={0}
-              max={10000}
-              step={100}
-              valueLabelFormat={(value) => `${value.toLocaleString()}`}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mt: 1,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {clicksRange[0].toLocaleString()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {clicksRange[1].toLocaleString()}
-                {clicksRange[1] === 10000 ? "+" : ""}
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Box display="flex" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              New Deposits Range
-            </Typography>
-            <Tooltip title="Filter by number of new deposits">
-              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-            </Tooltip>
-          </Box>
-          <Box sx={{ px: 2 }}>
-            <Slider
-              value={depositsRange}
-              onChange={handleDepositsRangeChange}
-              onChangeCommitted={handleDepositsRangeChangeCommitted}
-              valueLabelDisplay="auto"
-              min={0}
-              max={1000}
-              step={10}
-              valueLabelFormat={(value) => `${value.toLocaleString()}`}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mt: 1,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {depositsRange[0].toLocaleString()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {depositsRange[1].toLocaleString()}
-                {depositsRange[1] === 1000 ? "+" : ""}
-              </Typography>
-            </Box>
           </Box>
         </Grid>
 
@@ -350,7 +251,7 @@ export function FilterBar({
         <Grid
           item
           xs={12}
-          sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}
         >
           <Button
             variant="outlined"
@@ -359,6 +260,131 @@ export function FilterBar({
           >
             Reset Filters
           </Button>
+        </Grid>
+
+        {/* Advanced filters */}
+        <Grid item xs={12}>
+          <Collapse in={showAdvancedFilters}>
+            <Box
+              sx={{ mt: 1, p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      Impressions Range
+                    </Typography>
+                    <Tooltip title="Filter by number of impressions">
+                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+                    </Tooltip>
+                  </Box>
+                  <Box sx={{ px: 2 }}>
+                    <Slider
+                      value={impressionsRange}
+                      onChange={handleImpressionsRangeChange}
+                      onChangeCommitted={handleImpressionsRangeChangeCommitted}
+                      valueLabelDisplay="auto"
+                      min={0}
+                      max={100000}
+                      step={1000}
+                      valueLabelFormat={(value) => `${value.toLocaleString()}`}
+                    />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {impressionsRange[0].toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {impressionsRange[1].toLocaleString()}
+                        {impressionsRange[1] === 100000 ? "+" : ""}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      Clicks Range
+                    </Typography>
+                    <Tooltip title="Filter by number of clicks">
+                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+                    </Tooltip>
+                  </Box>
+                  <Box sx={{ px: 2 }}>
+                    <Slider
+                      value={clicksRange}
+                      onChange={handleClicksRangeChange}
+                      onChangeCommitted={handleClicksRangeChangeCommitted}
+                      valueLabelDisplay="auto"
+                      min={0}
+                      max={10000}
+                      step={100}
+                      valueLabelFormat={(value) => `${value.toLocaleString()}`}
+                    />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {clicksRange[0].toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {clicksRange[1].toLocaleString()}
+                        {clicksRange[1] === 10000 ? "+" : ""}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      New Deposits Range
+                    </Typography>
+                    <Tooltip title="Filter by number of new deposits">
+                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+                    </Tooltip>
+                  </Box>
+                  <Box sx={{ px: 2 }}>
+                    <Slider
+                      value={depositsRange}
+                      onChange={handleDepositsRangeChange}
+                      onChangeCommitted={handleDepositsRangeChangeCommitted}
+                      valueLabelDisplay="auto"
+                      min={0}
+                      max={1000}
+                      step={10}
+                      valueLabelFormat={(value) => `${value.toLocaleString()}`}
+                    />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {depositsRange[0].toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {depositsRange[1].toLocaleString()}
+                        {depositsRange[1] === 1000 ? "+" : ""}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Collapse>
         </Grid>
       </Grid>
     </Paper>

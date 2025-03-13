@@ -120,9 +120,6 @@ function GrossReportDashboard() {
       </Box>
 
       <Stack spacing={3}>
-        {/* Summary Cards */}
-        <SummaryCard allItems={items} filteredItems={filteredItems} />
-
         {/* Filter Bar */}
         <FilterBar
           years={years}
@@ -136,6 +133,9 @@ function GrossReportDashboard() {
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
+
+        {/* Summary Cards */}
+        <SummaryCard allItems={items} filteredItems={filteredItems} />
 
         {/* Gross Report Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>

@@ -34,110 +34,117 @@ export function FilterBar({
   onResetFilters,
 }: FilterBarProps) {
   return (
-    <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-      <Grid container spacing={3}>
+    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+      <Grid container spacing={2}>
         {/* Header and title */}
         <Grid item xs={12}>
-          <Box display="flex" alignItems="center" mb={2}>
-            <FilterAlt color="primary" sx={{ mr: 1 }} />
-            <Typography variant="subtitle1" fontWeight="medium">
-              Filter CPA Report
-            </Typography>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={1}
+          >
+            <Box display="flex" alignItems="center">
+              <FilterAlt color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle1" fontWeight="medium">
+                Filter CPA Report
+              </Typography>
+            </Box>
           </Box>
         </Grid>
 
-        {/* Basic filters */}
-        <Grid item xs={12} md={4}>
-          <Autocomplete
-            id="brand-select"
-            options={brands}
-            value={filters.brand || null}
-            onChange={(event, newValue) => {
-              onFilterChange({
-                ...filters,
-                brand: newValue || "",
-              });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Brand"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            fullWidth
-            freeSolo
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="tracker-select-label">Tracker ID</InputLabel>
-            <Select
-              labelId="tracker-select-label"
+        {/* All search boxes in one row */}
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+            <Autocomplete
+              id="brand-select"
+              options={brands}
+              value={filters.brand || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  brand: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Brand"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+            <Autocomplete
               id="tracker-select"
-              value={filters.trackerId}
-              label="Tracker ID"
+              options={trackerIds}
+              value={filters.trackerId || null}
+              onChange={(event, newValue) => {
+                onFilterChange({
+                  ...filters,
+                  trackerId: newValue || "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Tracker ID"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ flex: 1, minWidth: 180 }}
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+            />
+            <TextField
+              size="small"
+              label="Username"
+              value={filters.username || ""}
               onChange={(e) =>
                 onFilterChange({
                   ...filters,
-                  trackerId: e.target.value,
+                  username: e.target.value,
                 })
               }
-            >
-              <MenuItem value="">
-                <em>All Trackers</em>
-              </MenuItem>
-              {trackerIds.map((trackerId) => (
-                <MenuItem key={trackerId} value={trackerId}>
-                  {trackerId}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Username"
-            value={filters.username || ""}
-            onChange={(e) =>
-              onFilterChange({
-                ...filters,
-                username: e.target.value,
-              })
-            }
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            placeholder="Search by username..."
-          />
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Box sx={{ display: "flex", gap: 2 }}>
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              placeholder="Search by username..."
+              sx={{ flex: 1, minWidth: 180 }}
+            />
             <TextField
-              fullWidth
               size="small"
               label="Start Date"
               type="date"
@@ -156,9 +163,9 @@ export function FilterBar({
                 ),
               }}
               InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 180 }}
             />
             <TextField
-              fullWidth
               size="small"
               label="End Date"
               type="date"
@@ -170,6 +177,7 @@ export function FilterBar({
                 })
               }
               InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 180 }}
             />
           </Box>
         </Grid>
@@ -178,8 +186,7 @@ export function FilterBar({
         <Grid
           item
           xs={12}
-          md={4}
-          sx={{ display: "flex", alignItems: "center" }}
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}
         >
           <Button
             variant="outlined"
