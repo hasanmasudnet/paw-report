@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { mockAffiliates, brands, dealTypes, years, months } from "./mock-data";
 import { Affiliate, SubAffiliate, FilterOptions } from "./types";
@@ -22,6 +23,8 @@ import {
   Grid,
   Tooltip,
   Button,
+  Collapse,
+  IconButton,
 } from "@mui/material";
 import {
   TrendingUp,
@@ -30,39 +33,38 @@ import {
   Group,
   Paid,
   Info,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
 } from "@mui/icons-material";
 import { FileDown } from "lucide-react";
 import { exportToExcel } from "@/utils/excel-export";
 
 function SubAffiliateReport() {
-  // Extract all sub-affiliates from the mock data
-  const extractSubAffiliates = () => {
-    const allSubAffiliates: (SubAffiliate & {
-      parentUsername: string;
-    })[] = [];
+  // Group sub-affiliates by parent
+  const groupSubAffiliatesByParent = () => {
+    const groupedData: Affiliate[] = [];
 
     mockAffiliates.forEach((affiliate) => {
       if (affiliate.subAffiliates && affiliate.subAffiliates.length > 0) {
-        affiliate.subAffiliates.forEach((sub) => {
-          allSubAffiliates.push({
-            ...sub,
-            parentUsername: affiliate.username,
-          });
+        groupedData.push({
+          ...affiliate,
+          isParent: true,
         });
       }
     });
 
-    return allSubAffiliates;
+    return groupedData;
   };
 
-  const allSubAffiliates = extractSubAffiliates();
-  const [subAffiliates, setSubAffiliates] = useState(allSubAffiliates);
-  const [filteredSubAffiliates, setFilteredSubAffiliates] =
-    useState(allSubAffiliates);
+  const groupedAffiliates = groupSubAffiliatesByParent();
+  const [affiliates, setAffiliates] = useState<Affiliate[]>(groupedAffiliates);
+  const [filteredAffiliates, setFilteredAffiliates] =
+    useState<Affiliate[]>(groupedAffiliates);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("grossRevenue");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [filters, setFilters] = useState<FilterOptions>({
     brand: "",
     dealType: "",
@@ -74,33 +76,26 @@ function SubAffiliateReport() {
 
   // Apply filters whenever filters state changes
   useEffect(() => {
-    let filtered = subAffiliates.filter((subAffiliate) => {
+    let filtered = [...affiliates];
+
+    // Filter by brand, deal type, etc.
+    filtered = filtered.filter((affiliate) => {
       // Filter by brand
-      if (filters.brand && subAffiliate.brand !== filters.brand) {
+      if (filters.brand && affiliate.brand !== filters.brand) {
         return false;
       }
 
       // Filter by deal type
-      if (filters.dealType && subAffiliate.dealType !== filters.dealType) {
+      if (filters.dealType && affiliate.dealType !== filters.dealType) {
         return false;
       }
 
-      // Filter by parent affiliate username (case insensitive)
+      // Filter by affiliate username (case insensitive)
       if (
         filters.affiliateUsername &&
-        !subAffiliate.parentUsername
+        !affiliate.username
           .toLowerCase()
           .includes(filters.affiliateUsername.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Filter by sub-affiliate username (case insensitive)
-      if (
-        filters.subAffiliateUsername &&
-        !subAffiliate.username
-          .toLowerCase()
-          .includes(filters.subAffiliateUsername.toLowerCase())
       ) {
         return false;
       }
@@ -108,7 +103,8 @@ function SubAffiliateReport() {
       // Filter by year
       if (
         filters.year &&
-        new Date(subAffiliate.lastUpdated).getFullYear().toString() !==
+        affiliate.lastUpdated &&
+        new Date(affiliate.lastUpdated).getFullYear().toString() !==
           filters.year
       ) {
         return false;
@@ -117,8 +113,8 @@ function SubAffiliateReport() {
       // Filter by month
       if (
         filters.month &&
-        new Date(subAffiliate.lastUpdated).getMonth().toString() !==
-          filters.month
+        affiliate.lastUpdated &&
+        new Date(affiliate.lastUpdated).getMonth().toString() !== filters.month
       ) {
         return false;
       }
@@ -126,8 +122,37 @@ function SubAffiliateReport() {
       return true;
     });
 
-    setFilteredSubAffiliates(filtered);
-  }, [subAffiliates, filters]);
+    // Special handling for sub-affiliate username filter
+    if (filters.subAffiliateUsername) {
+      filtered = filtered
+        .map((affiliate) => {
+          if (
+            !affiliate.subAffiliates ||
+            affiliate.subAffiliates.length === 0
+          ) {
+            return null;
+          }
+
+          const matchingSubAffiliates = affiliate.subAffiliates.filter((sub) =>
+            sub.username
+              .toLowerCase()
+              .includes(filters.subAffiliateUsername.toLowerCase()),
+          );
+
+          if (matchingSubAffiliates.length === 0) {
+            return null;
+          }
+
+          return {
+            ...affiliate,
+            subAffiliates: matchingSubAffiliates,
+          };
+        })
+        .filter(Boolean) as Affiliate[];
+    }
+
+    setFilteredAffiliates(filtered);
+  }, [affiliates, filters]);
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
@@ -162,6 +187,13 @@ function SubAffiliateReport() {
       setSortField(field);
       setSortDirection("desc"); // Default to descending for new sort field
     }
+  };
+
+  const toggleRowExpanded = (affiliateId: string) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [affiliateId]: !prev[affiliateId],
+    }));
   };
 
   // Format currency
@@ -215,16 +247,13 @@ function SubAffiliateReport() {
     return (commission / revenue) * 100;
   };
 
-  // Sort and paginate sub-affiliates
-  const sortedSubAffiliates = [...filteredSubAffiliates].sort((a, b) => {
+  // Sort affiliates
+  const sortedAffiliates = [...filteredAffiliates].sort((a, b) => {
     let comparison = 0;
 
     switch (sortField) {
       case "username":
         comparison = a.username.localeCompare(b.username);
-        break;
-      case "parentUsername":
-        comparison = a.parentUsername.localeCompare(b.parentUsername);
         break;
       case "brand":
         comparison = a.brand.localeCompare(b.brand);
@@ -247,7 +276,10 @@ function SubAffiliateReport() {
       case "profit":
         comparison = a.profit - b.profit;
         break;
-
+      case "subAffiliateCount":
+        comparison =
+          (a.subAffiliates?.length || 0) - (b.subAffiliates?.length || 0);
+        break;
       default:
         comparison = 0;
     }
@@ -255,7 +287,8 @@ function SubAffiliateReport() {
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
-  const paginatedSubAffiliates = sortedSubAffiliates.slice(
+  // Paginate affiliates
+  const paginatedAffiliates = sortedAffiliates.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
@@ -263,14 +296,14 @@ function SubAffiliateReport() {
   // Find max values for visual indicators
   const maxValues = {
     maxRevenue: Math.max(
-      ...filteredSubAffiliates.map((sub) => sub.grossRevenue),
+      ...filteredAffiliates.map((aff) => aff.grossRevenue),
       1,
     ),
     maxCommission: Math.max(
-      ...filteredSubAffiliates.map((sub) => sub.commission),
+      ...filteredAffiliates.map((aff) => aff.commission),
       1,
     ),
-    maxProfit: Math.max(...filteredSubAffiliates.map((sub) => sub.profit), 1),
+    maxProfit: Math.max(...filteredAffiliates.map((aff) => aff.profit), 1),
   };
 
   // Calculate summary metrics
@@ -288,10 +321,7 @@ function SubAffiliateReport() {
     let totalCommission = 0;
     let totalCpaCommission = 0;
     let totalProfit = 0;
-    let totalCount = filteredSubAffiliates.length;
-    let parentAffiliateCount = new Set(
-      filteredSubAffiliates.map((sub) => sub.parentId),
-    ).size;
+    let totalSubAffiliateCount = 0;
 
     // Track metrics by deal type
     const dealTypeMetrics = {
@@ -302,30 +332,38 @@ function SubAffiliateReport() {
       Hybrid: { revenue: 0, commission: 0, count: 0 },
     };
 
-    filteredSubAffiliates.forEach((sub) => {
+    filteredAffiliates.forEach((affiliate) => {
       // Convert to USD for consistent calculations
       const exchangeRate =
-        exchangeRates[sub.currency as keyof typeof exchangeRates] || 1;
+        exchangeRates[affiliate.currency as keyof typeof exchangeRates] || 1;
 
-      const revenueInUSD = sub.grossRevenue * exchangeRate;
-      const commissionInUSD = sub.commission * exchangeRate;
-      const cpaCommissionInUSD = sub.cpaCommission * exchangeRate;
-      const profitInUSD = sub.profit * exchangeRate;
+      // Add parent affiliate metrics
+      totalGrossRevenue += affiliate.grossRevenue * exchangeRate;
+      totalCommission += affiliate.commission * exchangeRate;
+      totalCpaCommission += affiliate.cpaCommission * exchangeRate;
+      totalProfit += affiliate.profit * exchangeRate;
 
-      totalGrossRevenue += revenueInUSD;
-      totalCommission += commissionInUSD;
-      totalCpaCommission += cpaCommissionInUSD;
-      totalProfit += profitInUSD;
+      // Count sub-affiliates
+      if (affiliate.subAffiliates) {
+        totalSubAffiliateCount += affiliate.subAffiliates.length;
 
-      // Track by deal type
-      if (sub.dealType in dealTypeMetrics) {
-        dealTypeMetrics[sub.dealType as keyof typeof dealTypeMetrics].revenue +=
-          revenueInUSD;
-        dealTypeMetrics[
-          sub.dealType as keyof typeof dealTypeMetrics
-        ].commission += commissionInUSD;
-        dealTypeMetrics[sub.dealType as keyof typeof dealTypeMetrics].count +=
-          1;
+        // Add sub-affiliate metrics to deal type tracking
+        affiliate.subAffiliates.forEach((sub) => {
+          if (sub.dealType in dealTypeMetrics) {
+            const subExchangeRate =
+              exchangeRates[sub.currency as keyof typeof exchangeRates] || 1;
+
+            dealTypeMetrics[
+              sub.dealType as keyof typeof dealTypeMetrics
+            ].revenue += sub.grossRevenue * subExchangeRate;
+            dealTypeMetrics[
+              sub.dealType as keyof typeof dealTypeMetrics
+            ].commission += sub.commission * subExchangeRate;
+            dealTypeMetrics[
+              sub.dealType as keyof typeof dealTypeMetrics
+            ].count += 1;
+          }
+        });
       }
     });
 
@@ -352,8 +390,8 @@ function SubAffiliateReport() {
       totalCommission,
       totalCpaCommission,
       totalProfit,
-      totalCount,
-      parentAffiliateCount,
+      totalCount: filteredAffiliates.length,
+      totalSubAffiliateCount,
       avgCommissionRate,
       mostProfitableDealType,
       highestCommissionRate,
@@ -467,10 +505,10 @@ function SubAffiliateReport() {
                   </Tooltip>
                 </Box>
                 <Typography variant="h4" component="div" fontWeight="bold">
-                  {summaryMetrics.totalCount.toLocaleString()}
+                  {summaryMetrics.totalSubAffiliateCount.toLocaleString()}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Under {summaryMetrics.parentAffiliateCount} parent affiliates
+                  Under {summaryMetrics.totalCount} parent affiliates
                 </Typography>
               </CardContent>
             </Card>
@@ -492,32 +530,56 @@ function SubAffiliateReport() {
             }}
           >
             <Typography variant="h6" fontWeight="medium">
-              Sub-Affiliates ({filteredSubAffiliates.length})
+              Sub-Affiliates ({summaryMetrics.totalSubAffiliateCount})
             </Typography>
             <Button
               variant="outlined"
               size="small"
               startIcon={<FileDown size={18} />}
               onClick={() => {
-                // Prepare data for export
-                const exportData = filteredSubAffiliates.map(
-                  (subAffiliate) => ({
-                    parentUsername: subAffiliate.parentUsername,
-                    username: subAffiliate.username,
-                    brand: subAffiliate.brand,
-
-                    dealType: subAffiliate.dealType,
-                    grossRevenue: subAffiliate.grossRevenue,
-                    commission: subAffiliate.commission,
+                // Prepare data for export - flatten sub-affiliates
+                const exportData = filteredAffiliates.flatMap((affiliate) => {
+                  // Main affiliate row
+                  const mainRow = {
+                    type: "Affiliate",
+                    username: affiliate.username,
+                    brand: affiliate.brand,
+                    category: affiliate.category,
+                    dealType: affiliate.dealType,
+                    grossRevenue: affiliate.grossRevenue,
+                    commission: affiliate.commission,
                     commissionRate:
                       calculateCommissionRate(
-                        subAffiliate.grossRevenue,
-                        subAffiliate.commission,
+                        affiliate.grossRevenue,
+                        affiliate.commission,
                       ).toFixed(1) + "%",
-                    profit: subAffiliate.profit,
-                    currency: subAffiliate.currency,
-                  }),
-                );
+                    profit: affiliate.profit,
+                    currency: affiliate.currency,
+                    subAffiliateCount: affiliate.subAffiliates?.length || 0,
+                  };
+
+                  // Sub-affiliate rows
+                  const subRows =
+                    affiliate.subAffiliates?.map((sub) => ({
+                      type: "Sub-Affiliate",
+                      username: sub.username,
+                      parentUsername: affiliate.username,
+                      brand: sub.brand,
+                      category: sub.category,
+                      dealType: sub.dealType,
+                      grossRevenue: sub.grossRevenue,
+                      commission: sub.commission,
+                      commissionRate:
+                        calculateCommissionRate(
+                          sub.grossRevenue,
+                          sub.commission,
+                        ).toFixed(1) + "%",
+                      profit: sub.profit,
+                      currency: sub.currency,
+                    })) || [];
+
+                  return [mainRow, ...subRows];
+                });
 
                 exportToExcel(exportData, {
                   fileName: "Sub_Affiliate_Report",
@@ -536,32 +598,13 @@ function SubAffiliateReport() {
             <Table aria-label="sub-affiliate table">
               <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
-                  <TableCell
-                    onClick={() => handleSort("parentUsername")}
-                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      Parent Affiliate
-                      {sortField === "parentUsername" && (
-                        <TrendingUp
-                          fontSize="small"
-                          sx={{
-                            ml: 0.5,
-                            transform:
-                              sortDirection === "desc"
-                                ? "rotate(0deg)"
-                                : "rotate(180deg)",
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
+                  <TableCell width={50} />
                   <TableCell
                     onClick={() => handleSort("username")}
                     sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      Sub-Affiliate
+                      Affiliate
                       {sortField === "username" && (
                         <TrendingUp
                           fontSize="small"
@@ -576,7 +619,6 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
-
                   <TableCell
                     onClick={() => handleSort("brand")}
                     sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
@@ -597,7 +639,26 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
-
+                  <TableCell
+                    onClick={() => handleSort("category")}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      Category
+                      {sortField === "category" && (
+                        <TrendingUp
+                          fontSize="small"
+                          sx={{
+                            ml: 0.5,
+                            transform:
+                              sortDirection === "desc"
+                                ? "rotate(0deg)"
+                                : "rotate(180deg)",
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell
                     onClick={() => handleSort("dealType")}
                     sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
@@ -699,168 +760,372 @@ function SubAffiliateReport() {
                       )}
                     </Box>
                   </TableCell>
+                  <TableCell
+                    onClick={() => handleSort("subAffiliateCount")}
+                    sx={{ cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      Sub-Affiliates
+                      {sortField === "subAffiliateCount" && (
+                        <TrendingUp
+                          fontSize="small"
+                          sx={{
+                            ml: 0.5,
+                            transform:
+                              sortDirection === "desc"
+                                ? "rotate(0deg)"
+                                : "rotate(180deg)",
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>Currency</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedSubAffiliates.length === 0 ? (
+                {paginatedAffiliates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
-                        No sub-affiliates found.
+                        No affiliates with sub-affiliates found.
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedSubAffiliates.map((subAffiliate) => (
-                    <TableRow key={subAffiliate.id} hover>
-                      <TableCell>
-                        <Typography fontWeight="medium">
-                          {subAffiliate.parentUsername}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>{subAffiliate.username}</Typography>
-                      </TableCell>
-
-                      <TableCell>{subAffiliate.brand}</TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={subAffiliate.dealType}
-                          size="small"
-                          sx={{
-                            bgcolor: getDealTypeChipColor(subAffiliate.dealType)
-                              .bg,
-                            color: getDealTypeChipColor(subAffiliate.dealType)
-                              .color,
-                            fontWeight: "medium",
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box>
-                          <Typography
-                            color={getPerformanceColor(
-                              subAffiliate.grossRevenue,
-                            )}
-                            fontWeight="medium"
-                          >
-                            {formatCurrency(
-                              subAffiliate.grossRevenue,
-                              subAffiliate.currency,
-                            )}
-                          </Typography>
-                          <LinearProgress
-                            variant="determinate"
-                            value={
-                              (subAffiliate.grossRevenue /
-                                maxValues.maxRevenue) *
-                              100
-                            }
-                            sx={{
-                              height: 4,
-                              borderRadius: 2,
-                              mt: 0.5,
-                              bgcolor: "rgba(0,0,0,0.05)",
-                              "& .MuiLinearProgress-bar": {
-                                bgcolor: getPerformanceColor(
-                                  subAffiliate.grossRevenue,
-                                ),
-                              },
-                            }}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box>
-                          <Typography
-                            color={getCommissionRateColor(
-                              subAffiliate.grossRevenue,
-                              subAffiliate.commission,
-                            )}
-                            fontWeight="medium"
-                          >
-                            {formatCurrency(
-                              subAffiliate.commission,
-                              subAffiliate.currency,
-                            )}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "flex-end",
-                              mt: 0.5,
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              color={getCommissionRateColor(
-                                subAffiliate.grossRevenue,
-                                subAffiliate.commission,
-                              )}
+                  paginatedAffiliates.map((affiliate) => {
+                    const isExpanded = expandedRows[affiliate.id] || false;
+                    return (
+                      <React.Fragment key={affiliate.id}>
+                        <TableRow hover>
+                          <TableCell>
+                            <IconButton
+                              aria-label="expand row"
+                              size="small"
+                              onClick={() => toggleRowExpanded(affiliate.id)}
+                              disabled={!affiliate.subAffiliates?.length}
+                              sx={{
+                                opacity: affiliate.subAffiliates?.length
+                                  ? 1
+                                  : 0.3,
+                              }}
                             >
-                              {calculateCommissionRate(
-                                subAffiliate.grossRevenue,
-                                subAffiliate.commission,
-                              ).toFixed(1)}
-                              %
+                              {isExpanded ? (
+                                <KeyboardArrowUp />
+                              ) : (
+                                <KeyboardArrowDown />
+                              )}
+                            </IconButton>
+                          </TableCell>
+                          <TableCell>
+                            <Typography fontWeight="medium">
+                              {affiliate.username}
                             </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          <Typography
-                            color={getPerformanceColor(subAffiliate.profit)}
-                            fontWeight="medium"
-                            sx={{ display: "flex", alignItems: "center" }}
-                          >
-                            {subAffiliate.profit >
-                            subAffiliate.grossRevenue * 0.8 ? (
-                              <TrendingUp
-                                fontSize="small"
-                                sx={{ mr: 0.5, color: "success.main" }}
-                              />
-                            ) : subAffiliate.profit <
-                              subAffiliate.grossRevenue * 0.7 ? (
-                              <TrendingDown
-                                fontSize="small"
-                                sx={{ mr: 0.5, color: "error.main" }}
-                              />
-                            ) : null}
-                            {formatCurrency(
-                              subAffiliate.profit,
-                              subAffiliate.currency,
+                            {affiliate.affiliate && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {affiliate.affiliate}
+                              </Typography>
                             )}
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={
-                            (subAffiliate.profit / maxValues.maxProfit) * 100
-                          }
-                          sx={{
-                            height: 4,
-                            borderRadius: 2,
-                            mt: 0.5,
-                            bgcolor: "rgba(0,0,0,0.05)",
-                            "& .MuiLinearProgress-bar": {
-                              bgcolor: getPerformanceColor(subAffiliate.profit),
-                            },
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{subAffiliate.currency}</TableCell>
-                    </TableRow>
-                  ))
+                          </TableCell>
+                          <TableCell>{affiliate.brand}</TableCell>
+                          <TableCell>{affiliate.category}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={affiliate.dealType}
+                              size="small"
+                              sx={{
+                                bgcolor: getDealTypeChipColor(
+                                  affiliate.dealType,
+                                ).bg,
+                                color: getDealTypeChipColor(affiliate.dealType)
+                                  .color,
+                                fontWeight: "medium",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box>
+                              <Typography
+                                color={getPerformanceColor(
+                                  affiliate.grossRevenue,
+                                )}
+                                fontWeight="medium"
+                              >
+                                {formatCurrency(
+                                  affiliate.grossRevenue,
+                                  affiliate.currency,
+                                )}
+                              </Typography>
+                              <LinearProgress
+                                variant="determinate"
+                                value={
+                                  (affiliate.grossRevenue /
+                                    maxValues.maxRevenue) *
+                                  100
+                                }
+                                sx={{
+                                  height: 4,
+                                  borderRadius: 2,
+                                  mt: 0.5,
+                                  bgcolor: "rgba(0,0,0,0.05)",
+                                  "& .MuiLinearProgress-bar": {
+                                    bgcolor: getPerformanceColor(
+                                      affiliate.grossRevenue,
+                                    ),
+                                  },
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box>
+                              <Typography
+                                color={getCommissionRateColor(
+                                  affiliate.grossRevenue,
+                                  affiliate.commission,
+                                )}
+                                fontWeight="medium"
+                              >
+                                {formatCurrency(
+                                  affiliate.commission,
+                                  affiliate.currency,
+                                )}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "flex-end",
+                                  mt: 0.5,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color={getCommissionRateColor(
+                                    affiliate.grossRevenue,
+                                    affiliate.commission,
+                                  )}
+                                >
+                                  {calculateCommissionRate(
+                                    affiliate.grossRevenue,
+                                    affiliate.commission,
+                                  ).toFixed(1)}
+                                  %
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                              }}
+                            >
+                              <Typography
+                                color={getPerformanceColor(affiliate.profit)}
+                                fontWeight="medium"
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                {affiliate.profit >
+                                affiliate.grossRevenue * 0.5 ? (
+                                  <TrendingUp
+                                    fontSize="small"
+                                    sx={{ mr: 0.5, color: "success.main" }}
+                                  />
+                                ) : affiliate.profit <
+                                  affiliate.grossRevenue * 0.3 ? (
+                                  <TrendingDown
+                                    fontSize="small"
+                                    sx={{ mr: 0.5, color: "error.main" }}
+                                  />
+                                ) : null}
+                                {formatCurrency(
+                                  affiliate.profit,
+                                  affiliate.currency,
+                                )}
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={
+                                (affiliate.profit / maxValues.maxProfit) * 100
+                              }
+                              sx={{
+                                height: 4,
+                                borderRadius: 2,
+                                mt: 0.5,
+                                bgcolor: "rgba(0,0,0,0.05)",
+                                "& .MuiLinearProgress-bar": {
+                                  bgcolor: getPerformanceColor(
+                                    affiliate.profit,
+                                  ),
+                                },
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={affiliate.subAffiliates?.length || 0}
+                              size="small"
+                              color={
+                                affiliate.subAffiliates?.length
+                                  ? "primary"
+                                  : "default"
+                              }
+                              sx={{ fontWeight: "medium" }}
+                            />
+                          </TableCell>
+                          <TableCell>{affiliate.currency}</TableCell>
+                        </TableRow>
+
+                        {/* Sub-Affiliates Collapsible Section */}
+                        {affiliate.subAffiliates && (
+                          <TableRow>
+                            <TableCell
+                              style={{ paddingBottom: 0, paddingTop: 0 }}
+                              colSpan={10}
+                            >
+                              <Collapse
+                                in={isExpanded}
+                                timeout="auto"
+                                unmountOnExit
+                              >
+                                <Box sx={{ margin: 2 }}>
+                                  <Typography
+                                    variant="subtitle2"
+                                    gutterBottom
+                                    component="div"
+                                    sx={{ fontWeight: "bold", mb: 2 }}
+                                  >
+                                    Sub-Affiliates (
+                                    {affiliate.subAffiliates.length})
+                                  </Typography>
+                                  <Table
+                                    size="small"
+                                    aria-label="sub-affiliates"
+                                    sx={{
+                                      bgcolor: "action.hover",
+                                      borderRadius: 1,
+                                    }}
+                                  >
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>Username</TableCell>
+                                        <TableCell>Brand</TableCell>
+                                        <TableCell>Category</TableCell>
+                                        <TableCell>Deal Type</TableCell>
+                                        <TableCell align="right">
+                                          Gross Revenue
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          Commission
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          CPA Commission
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          Profit
+                                        </TableCell>
+                                        <TableCell>Currency</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {affiliate.subAffiliates.map(
+                                        (subAffiliate) => (
+                                          <TableRow key={subAffiliate.id}>
+                                            <TableCell
+                                              component="th"
+                                              scope="row"
+                                            >
+                                              {subAffiliate.username}
+                                            </TableCell>
+                                            <TableCell>
+                                              {subAffiliate.brand}
+                                            </TableCell>
+                                            <TableCell>
+                                              {subAffiliate.category}
+                                            </TableCell>
+                                            <TableCell>
+                                              <Chip
+                                                label={subAffiliate.dealType}
+                                                size="small"
+                                                sx={{
+                                                  bgcolor: getDealTypeChipColor(
+                                                    subAffiliate.dealType,
+                                                  ).bg,
+                                                  color: getDealTypeChipColor(
+                                                    subAffiliate.dealType,
+                                                  ).color,
+                                                  fontWeight: "medium",
+                                                }}
+                                              />
+                                            </TableCell>
+                                            <TableCell align="right">
+                                              {formatCurrency(
+                                                subAffiliate.grossRevenue,
+                                                subAffiliate.currency,
+                                              )}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                              <Box
+                                                sx={{
+                                                  display: "flex",
+                                                  flexDirection: "column",
+                                                  alignItems: "flex-end",
+                                                }}
+                                              >
+                                                {formatCurrency(
+                                                  subAffiliate.commission,
+                                                  subAffiliate.currency,
+                                                )}
+                                                <Typography
+                                                  variant="caption"
+                                                  color={getCommissionRateColor(
+                                                    subAffiliate.grossRevenue,
+                                                    subAffiliate.commission,
+                                                  )}
+                                                >
+                                                  {calculateCommissionRate(
+                                                    subAffiliate.grossRevenue,
+                                                    subAffiliate.commission,
+                                                  ).toFixed(1)}
+                                                  %
+                                                </Typography>
+                                              </Box>
+                                            </TableCell>
+                                            <TableCell align="right">
+                                              {formatCurrency(
+                                                subAffiliate.cpaCommission,
+                                                subAffiliate.currency,
+                                              )}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                              {formatCurrency(
+                                                subAffiliate.profit,
+                                                subAffiliate.currency,
+                                              )}
+                                            </TableCell>
+                                            <TableCell>
+                                              {subAffiliate.currency}
+                                            </TableCell>
+                                          </TableRow>
+                                        ),
+                                      )}
+                                    </TableBody>
+                                  </Table>
+                                </Box>
+                              </Collapse>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -868,7 +1133,7 @@ function SubAffiliateReport() {
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={filteredSubAffiliates.length}
+            count={filteredAffiliates.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
