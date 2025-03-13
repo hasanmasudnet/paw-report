@@ -1,18 +1,15 @@
 import { useState, useEffect } from "react";
 import {
-  mockGrossReportItems,
+  mockRevenueShareItems,
   brands,
   trackerIds,
   usernames,
-  affiliateIds,
   affiliateNames,
-  years,
-  months,
 } from "./mock-data";
-import { GrossReportItem, GrossReportFilterOptions } from "./types";
+import { RevenueShareItem, RevenueShareFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
-import { GrossReportTable } from "./gross-report-table";
+import { RevenueShareTable } from "./revenue-share-table";
 import {
   Box,
   Container,
@@ -24,39 +21,21 @@ import {
 import { FileDown } from "lucide-react";
 import { exportToExcel } from "@/utils/excel-export";
 
-function GrossReportDashboard() {
-  const [items, setItems] = useState<GrossReportItem[]>(mockGrossReportItems);
-  const [filteredItems, setFilteredItems] =
-    useState<GrossReportItem[]>(mockGrossReportItems);
-  const [filters, setFilters] = useState<GrossReportFilterOptions>({
-    year: "",
-    month: "",
+function RevenueShareDashboard() {
+  const [items, setItems] = useState<RevenueShareItem[]>(mockRevenueShareItems);
+  const [filteredItems, setFilteredItems] = useState<RevenueShareItem[]>(
+    mockRevenueShareItems,
+  );
+  const [filters, setFilters] = useState<RevenueShareFilterOptions>({
     brand: "",
     trackerId: "",
     username: "",
-    affiliateId: "",
     affiliate: "",
   });
 
   // Apply filters whenever filters state changes
   useEffect(() => {
     const filtered = items.filter((item) => {
-      // Filter by year
-      if (
-        filters.year &&
-        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
-      ) {
-        return false;
-      }
-
-      // Filter by month
-      if (
-        filters.month &&
-        new Date(item.lastUpdated).getMonth().toString() !== filters.month
-      ) {
-        return false;
-      }
-
       // Filter by brand
       if (filters.brand && item.brand !== filters.brand) {
         return false;
@@ -75,13 +54,27 @@ function GrossReportDashboard() {
         return false;
       }
 
-      // Filter by affiliate ID
-      if (filters.affiliateId && item.affiliateId !== filters.affiliateId) {
+      // Filter by affiliate
+      if (filters.affiliate && item.affiliate !== filters.affiliate) {
         return false;
       }
 
-      // Filter by affiliate name
-      if (filters.affiliate && item.affiliate !== filters.affiliate) {
+      // Filter by share percentage range
+      if (
+        (filters.minSharePercentage !== undefined &&
+          item.sharePercentage < filters.minSharePercentage) ||
+        (filters.maxSharePercentage !== undefined &&
+          item.sharePercentage > filters.maxSharePercentage)
+      ) {
+        return false;
+      }
+
+      // Filter by date range
+      const itemDate = new Date(item.lastUpdated);
+      if (filters.startDate && new Date(filters.startDate) > itemDate) {
+        return false;
+      }
+      if (filters.endDate && new Date(filters.endDate) < itemDate) {
         return false;
       }
 
@@ -91,18 +84,15 @@ function GrossReportDashboard() {
     setFilteredItems(filtered);
   }, [items, filters]);
 
-  const handleFilterChange = (newFilters: GrossReportFilterOptions) => {
+  const handleFilterChange = (newFilters: RevenueShareFilterOptions) => {
     setFilters(newFilters);
   };
 
   const handleResetFilters = () => {
     setFilters({
-      year: "",
-      month: "",
       brand: "",
       trackerId: "",
       username: "",
-      affiliateId: "",
       affiliate: "",
     });
   };
@@ -111,11 +101,11 @@ function GrossReportDashboard() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Gross Report Dashboard
+          Revenue Share Report
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Track and analyze revenue, deductions, and profits across different
-          brands and trackers.
+          Track and analyze revenue sharing across different brands, trackers,
+          and affiliates.
         </Typography>
       </Box>
 
@@ -125,19 +115,16 @@ function GrossReportDashboard() {
 
         {/* Filter Bar */}
         <FilterBar
-          years={years}
-          months={months}
           brands={brands}
           trackerIds={trackerIds}
           usernames={usernames}
-          affiliateIds={affiliateIds}
           affiliateNames={affiliateNames}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
 
-        {/* Gross Report Table */}
+        {/* Revenue Share Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
           <Box
             sx={{
@@ -150,7 +137,7 @@ function GrossReportDashboard() {
             }}
           >
             <Typography variant="h6" fontWeight="medium">
-              Gross Report Items ({filteredItems.length})
+              Revenue Share Items ({filteredItems.length})
             </Typography>
             <Button
               variant="outlined"
@@ -161,31 +148,30 @@ function GrossReportDashboard() {
                 const exportData = filteredItems.map((item) => ({
                   brand: item.brand,
                   trackerId: item.trackerId,
-                  deduction: item.deduction,
-                  adminFee: item.adminFee,
                   username: item.username,
                   affiliate: item.affiliate,
+                  grossRevenue: item.grossRevenue,
+                  sharePercentage: item.sharePercentage + "%",
+                  shareAmount: item.shareAmount,
                   netRevenue: item.netRevenue,
-                  profit: item.profit,
                   currency: item.currency,
                   lastUpdated: new Date(item.lastUpdated).toLocaleDateString(),
-                  affiliateId: item.affiliateId || "N/A",
                 }));
 
                 exportToExcel(exportData, {
-                  fileName: "Gross_Report",
-                  sheetName: "Gross Report",
+                  fileName: "Revenue_Share_Report",
+                  sheetName: "Revenue Share",
                 });
               }}
             >
               Export Excel
             </Button>
           </Box>
-          <GrossReportTable items={filteredItems} />
+          <RevenueShareTable items={filteredItems} />
         </Paper>
       </Stack>
     </Container>
   );
 }
 
-export default GrossReportDashboard;
+export default RevenueShareDashboard;

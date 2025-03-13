@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
-import {
-  mockGrossReportItems,
-  brands,
-  trackerIds,
-  usernames,
-  affiliateIds,
-  affiliateNames,
-  years,
-  months,
-} from "./mock-data";
-import { GrossReportItem, GrossReportFilterOptions } from "./types";
+import { mockTrafficReportItems, brands, trackerIds } from "./mock-data";
+import { TrafficReportItem, TrafficReportFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
-import { GrossReportTable } from "./gross-report-table";
+import { TrafficReportTable } from "./traffic-report-table";
 import {
   Box,
   Container,
@@ -24,39 +15,21 @@ import {
 import { FileDown } from "lucide-react";
 import { exportToExcel } from "@/utils/excel-export";
 
-function GrossReportDashboard() {
-  const [items, setItems] = useState<GrossReportItem[]>(mockGrossReportItems);
-  const [filteredItems, setFilteredItems] =
-    useState<GrossReportItem[]>(mockGrossReportItems);
-  const [filters, setFilters] = useState<GrossReportFilterOptions>({
-    year: "",
-    month: "",
+function TrafficReportDashboard() {
+  const [items, setItems] = useState<TrafficReportItem[]>(
+    mockTrafficReportItems,
+  );
+  const [filteredItems, setFilteredItems] = useState<TrafficReportItem[]>(
+    mockTrafficReportItems,
+  );
+  const [filters, setFilters] = useState<TrafficReportFilterOptions>({
     brand: "",
     trackerId: "",
-    username: "",
-    affiliateId: "",
-    affiliate: "",
   });
 
   // Apply filters whenever filters state changes
   useEffect(() => {
     const filtered = items.filter((item) => {
-      // Filter by year
-      if (
-        filters.year &&
-        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
-      ) {
-        return false;
-      }
-
-      // Filter by month
-      if (
-        filters.month &&
-        new Date(item.lastUpdated).getMonth().toString() !== filters.month
-      ) {
-        return false;
-      }
-
       // Filter by brand
       if (filters.brand && item.brand !== filters.brand) {
         return false;
@@ -67,21 +40,40 @@ function GrossReportDashboard() {
         return false;
       }
 
-      // Filter by username (case insensitive)
+      // Filter by impressions range
       if (
-        filters.username &&
-        !item.username.toLowerCase().includes(filters.username.toLowerCase())
+        (filters.minImpressions !== undefined &&
+          item.impressions < filters.minImpressions) ||
+        (filters.maxImpressions !== undefined &&
+          item.impressions > filters.maxImpressions)
       ) {
         return false;
       }
 
-      // Filter by affiliate ID
-      if (filters.affiliateId && item.affiliateId !== filters.affiliateId) {
+      // Filter by clicks range
+      if (
+        (filters.minClicks !== undefined && item.clicks < filters.minClicks) ||
+        (filters.maxClicks !== undefined && item.clicks > filters.maxClicks)
+      ) {
         return false;
       }
 
-      // Filter by affiliate name
-      if (filters.affiliate && item.affiliate !== filters.affiliate) {
+      // Filter by deposits range
+      if (
+        (filters.minDeposits !== undefined &&
+          item.newDeposits < filters.minDeposits) ||
+        (filters.maxDeposits !== undefined &&
+          item.newDeposits > filters.maxDeposits)
+      ) {
+        return false;
+      }
+
+      // Filter by date range
+      const itemDate = new Date(item.lastUpdated);
+      if (filters.startDate && new Date(filters.startDate) > itemDate) {
+        return false;
+      }
+      if (filters.endDate && new Date(filters.endDate) < itemDate) {
         return false;
       }
 
@@ -91,19 +83,14 @@ function GrossReportDashboard() {
     setFilteredItems(filtered);
   }, [items, filters]);
 
-  const handleFilterChange = (newFilters: GrossReportFilterOptions) => {
+  const handleFilterChange = (newFilters: TrafficReportFilterOptions) => {
     setFilters(newFilters);
   };
 
   const handleResetFilters = () => {
     setFilters({
-      year: "",
-      month: "",
       brand: "",
       trackerId: "",
-      username: "",
-      affiliateId: "",
-      affiliate: "",
     });
   };
 
@@ -111,11 +98,11 @@ function GrossReportDashboard() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Gross Report Dashboard
+          Traffic Report Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Track and analyze revenue, deductions, and profits across different
-          brands and trackers.
+          Track and analyze impressions, clicks, and new deposits across
+          different brands and trackers.
         </Typography>
       </Box>
 
@@ -125,19 +112,14 @@ function GrossReportDashboard() {
 
         {/* Filter Bar */}
         <FilterBar
-          years={years}
-          months={months}
           brands={brands}
           trackerIds={trackerIds}
-          usernames={usernames}
-          affiliateIds={affiliateIds}
-          affiliateNames={affiliateNames}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
 
-        {/* Gross Report Table */}
+        {/* Traffic Report Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
           <Box
             sx={{
@@ -150,7 +132,7 @@ function GrossReportDashboard() {
             }}
           >
             <Typography variant="h6" fontWeight="medium">
-              Gross Report Items ({filteredItems.length})
+              Traffic Report Items ({filteredItems.length})
             </Typography>
             <Button
               variant="outlined"
@@ -161,31 +143,28 @@ function GrossReportDashboard() {
                 const exportData = filteredItems.map((item) => ({
                   brand: item.brand,
                   trackerId: item.trackerId,
-                  deduction: item.deduction,
-                  adminFee: item.adminFee,
-                  username: item.username,
-                  affiliate: item.affiliate,
-                  netRevenue: item.netRevenue,
-                  profit: item.profit,
-                  currency: item.currency,
+                  impressions: item.impressions,
+                  clicks: item.clicks,
+                  ctr: (item.ctr || 0).toFixed(2) + "%",
+                  newDeposits: item.newDeposits,
+                  conversionRate: (item.conversionRate || 0).toFixed(2) + "%",
                   lastUpdated: new Date(item.lastUpdated).toLocaleDateString(),
-                  affiliateId: item.affiliateId || "N/A",
                 }));
 
                 exportToExcel(exportData, {
-                  fileName: "Gross_Report",
-                  sheetName: "Gross Report",
+                  fileName: "Traffic_Report",
+                  sheetName: "Traffic Data",
                 });
               }}
             >
               Export Excel
             </Button>
           </Box>
-          <GrossReportTable items={filteredItems} />
+          <TrafficReportTable items={filteredItems} />
         </Paper>
       </Stack>
     </Container>
   );
 }
 
-export default GrossReportDashboard;
+export default TrafficReportDashboard;

@@ -1,10 +1,10 @@
-import AffiliateDashboard from "./affiliate/affiliate-dashboard";
+import GrossReport from "./gross-report";
 import { Box } from "@mui/material";
 
 function Home() {
   return (
     <Box>
-      <AffiliateDashboard />
+      <GrossReport />
     </Box>
   );
 }

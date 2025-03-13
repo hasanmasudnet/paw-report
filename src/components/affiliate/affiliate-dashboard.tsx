@@ -10,7 +10,16 @@ import { Affiliate, FilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
 import { AffiliateTable } from "./affiliate-table";
-import { Box, Container, Typography, Stack, Paper } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Stack,
+  Paper,
+  Button,
+} from "@mui/material";
+import { FileDown } from "lucide-react";
+import { exportToExcel } from "@/utils/excel-export";
 
 function AffiliateDashboard() {
   const [affiliates, setAffiliates] = useState<Affiliate[]>(mockAffiliates);
@@ -171,10 +180,70 @@ function AffiliateDashboard() {
 
         {/* Affiliate Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Typography variant="h6" fontWeight="medium">
               Affiliates with Sub-Affiliates ({filteredAffiliates.length})
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FileDown size={18} />}
+              onClick={() => {
+                // Prepare data for export - flatten sub-affiliates
+                const exportData = filteredAffiliates.flatMap((affiliate) => {
+                  // Main affiliate row
+                  const mainRow = {
+                    type: "Affiliate",
+                    username: affiliate.username,
+                    brand: affiliate.brand,
+                    category: affiliate.category,
+                    dealType: affiliate.dealType,
+                    affiliate: affiliate.affiliate || "N/A",
+                    grossRevenue: affiliate.grossRevenue,
+                    commission: affiliate.commission,
+                    cpaCommission: affiliate.cpaCommission,
+                    profit: affiliate.profit,
+                    currency: affiliate.currency,
+                    subAffiliateCount: affiliate.subAffiliates?.length || 0,
+                  };
+
+                  // Sub-affiliate rows
+                  const subRows =
+                    affiliate.subAffiliates?.map((sub) => ({
+                      type: "Sub-Affiliate",
+                      username: sub.username,
+                      parentUsername: affiliate.username,
+                      brand: sub.brand,
+                      category: sub.category,
+                      dealType: sub.dealType,
+                      affiliate: affiliate.affiliate || "N/A",
+                      grossRevenue: sub.grossRevenue,
+                      commission: sub.commission,
+                      cpaCommission: sub.cpaCommission,
+                      profit: sub.profit,
+                      currency: sub.currency,
+                    })) || [];
+
+                  return [mainRow, ...subRows];
+                });
+
+                exportToExcel(exportData, {
+                  fileName: "Affiliate_Report",
+                  sheetName: "Affiliates",
+                });
+              }}
+            >
+              Export Excel
+            </Button>
           </Box>
           <AffiliateTable affiliates={filteredAffiliates} />
         </Paper>

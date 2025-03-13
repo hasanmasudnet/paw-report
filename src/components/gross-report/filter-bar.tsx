@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { GrossReportFilterOptions } from "./types";
 import {
   Box,
@@ -10,18 +10,11 @@ import {
   Paper,
   Typography,
   Grid,
-  SelectChangeEvent,
   TextField,
   InputAdornment,
-  Collapse,
+  Autocomplete,
 } from "@mui/material";
-import {
-  FilterAlt,
-  RestartAlt,
-  Search,
-  ExpandMore,
-  ExpandLess,
-} from "@mui/icons-material";
+import { FilterAlt, RestartAlt, Search, Info } from "@mui/icons-material";
 
 interface FilterBarProps {
   years: string[];
@@ -29,7 +22,6 @@ interface FilterBarProps {
   brands: string[];
   trackerIds: string[];
   usernames: string[];
-  affiliateIds: string[];
   affiliateNames: string[];
   filters: GrossReportFilterOptions;
   onFilterChange: (filters: GrossReportFilterOptions) => void;
@@ -42,67 +34,11 @@ export function FilterBar({
   brands,
   trackerIds,
   usernames,
-  affiliateIds,
   affiliateNames,
   filters,
   onFilterChange,
   onResetFilters,
 }: FilterBarProps) {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-
-  const handleYearChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      year: event.target.value,
-    });
-  };
-
-  const handleMonthChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      month: event.target.value,
-    });
-  };
-
-  const handleBrandChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      brand: event.target.value,
-    });
-  };
-
-  const handleTrackerIdChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      trackerId: event.target.value,
-    });
-  };
-
-  const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({
-      ...filters,
-      username: event.target.value,
-    });
-  };
-
-  const handleAffiliateIdChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      affiliateId: event.target.value,
-    });
-  };
-
-  const handleAffiliateChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      affiliate: event.target.value,
-    });
-  };
-
-  const toggleAdvancedFilters = () => {
-    setShowAdvancedFilters(!showAdvancedFilters);
-  };
-
   return (
     <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
       <Grid container spacing={3}>
@@ -120,16 +56,6 @@ export function FilterBar({
                 Filter Gross Report
               </Typography>
             </Box>
-            <Button
-              variant="text"
-              size="small"
-              onClick={toggleAdvancedFilters}
-              endIcon={showAdvancedFilters ? <ExpandLess /> : <ExpandMore />}
-            >
-              {showAdvancedFilters
-                ? "Hide Advanced Filters"
-                : "Show Advanced Filters"}
-            </Button>
           </Box>
         </Grid>
 
@@ -142,7 +68,12 @@ export function FilterBar({
               id="year-select"
               value={filters.year}
               label="Year"
-              onChange={handleYearChange}
+              onChange={(e) =>
+                onFilterChange({
+                  ...filters,
+                  year: e.target.value,
+                })
+              }
             >
               <MenuItem value="">
                 <em>All Years</em>
@@ -164,7 +95,12 @@ export function FilterBar({
               id="month-select"
               value={filters.month}
               label="Month"
-              onChange={handleMonthChange}
+              onChange={(e) =>
+                onFilterChange({
+                  ...filters,
+                  month: e.target.value,
+                })
+              }
             >
               <MenuItem value="">
                 <em>All Months</em>
@@ -179,25 +115,40 @@ export function FilterBar({
         </Grid>
 
         <Grid item xs={12} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="brand-select-label">Brand</InputLabel>
-            <Select
-              labelId="brand-select-label"
-              id="brand-select"
-              value={filters.brand}
-              label="Brand"
-              onChange={handleBrandChange}
-            >
-              <MenuItem value="">
-                <em>All Brands</em>
-              </MenuItem>
-              {brands.map((brand) => (
-                <MenuItem key={brand} value={brand}>
-                  {brand}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            id="brand-select"
+            options={brands}
+            value={filters.brand || null}
+            onChange={(event, newValue) => {
+              onFilterChange({
+                ...filters,
+                brand: newValue || "",
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Brand"
+                size="small"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <Search fontSize="small" />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            fullWidth
+            freeSolo
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
+          />
         </Grid>
 
         <Grid item xs={12} md={4} lg={2}>
@@ -208,7 +159,12 @@ export function FilterBar({
               id="tracker-select"
               value={filters.trackerId}
               label="Tracker ID"
-              onChange={handleTrackerIdChange}
+              onChange={(e) =>
+                onFilterChange({
+                  ...filters,
+                  trackerId: e.target.value,
+                })
+              }
             >
               <MenuItem value="">
                 <em>All Trackers</em>
@@ -222,13 +178,18 @@ export function FilterBar({
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} md={8} lg={4}>
+        <Grid item xs={12} md={4} lg={3}>
           <TextField
             fullWidth
             size="small"
             label="Username"
             value={filters.username || ""}
-            onChange={handleUsernameChange}
+            onChange={(e) =>
+              onFilterChange({
+                ...filters,
+                username: e.target.value,
+              })
+            }
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -240,60 +201,41 @@ export function FilterBar({
           />
         </Grid>
 
-        {/* Advanced filters */}
-        <Grid item xs={12}>
-          <Collapse in={showAdvancedFilters}>
-            <Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="affiliate-select-label">
-                      Affiliate ID
-                    </InputLabel>
-                    <Select
-                      labelId="affiliate-select-label"
-                      id="affiliate-select"
-                      value={filters.affiliateId}
-                      label="Affiliate ID"
-                      onChange={handleAffiliateIdChange}
-                    >
-                      <MenuItem value="">
-                        <em>All Affiliate IDs</em>
-                      </MenuItem>
-                      {affiliateIds.map((affiliateId) => (
-                        <MenuItem key={affiliateId} value={affiliateId}>
-                          {affiliateId}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="affiliate-name-select-label">
-                      Affiliate
-                    </InputLabel>
-                    <Select
-                      labelId="affiliate-name-select-label"
-                      id="affiliate-name-select"
-                      value={filters.affiliate}
-                      label="Affiliate"
-                      onChange={handleAffiliateChange}
-                    >
-                      <MenuItem value="">
-                        <em>All Affiliates</em>
-                      </MenuItem>
-                      {affiliateNames.map((affiliateName) => (
-                        <MenuItem key={affiliateName} value={affiliateName}>
-                          {affiliateName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </Box>
-          </Collapse>
+        <Grid item xs={12} md={4} lg={3}>
+          <Autocomplete
+            id="affiliate-name-select"
+            options={affiliateNames}
+            value={filters.affiliate || null}
+            onChange={(event, newValue) => {
+              onFilterChange({
+                ...filters,
+                affiliate: newValue || "",
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Affiliate"
+                size="small"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <Search fontSize="small" />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            fullWidth
+            freeSolo
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
+          />
         </Grid>
 
         {/* Reset button */}

@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
-import {
-  mockGrossReportItems,
-  brands,
-  trackerIds,
-  usernames,
-  affiliateIds,
-  affiliateNames,
-  years,
-  months,
-} from "./mock-data";
-import { GrossReportItem, GrossReportFilterOptions } from "./types";
+import { mockCPAReportItems, brands, trackerIds, usernames } from "./mock-data";
+import { CPAReportItem, CPAReportFilterOptions } from "./types";
 import { SummaryCard } from "./summary-card";
 import { FilterBar } from "./filter-bar";
-import { GrossReportTable } from "./gross-report-table";
+import { CPAReportTable } from "./cpa-report-table";
 import {
   Box,
   Container,
@@ -24,39 +15,19 @@ import {
 import { FileDown } from "lucide-react";
 import { exportToExcel } from "@/utils/excel-export";
 
-function GrossReportDashboard() {
-  const [items, setItems] = useState<GrossReportItem[]>(mockGrossReportItems);
+function CPAReportDashboard() {
+  const [items, setItems] = useState<CPAReportItem[]>(mockCPAReportItems);
   const [filteredItems, setFilteredItems] =
-    useState<GrossReportItem[]>(mockGrossReportItems);
-  const [filters, setFilters] = useState<GrossReportFilterOptions>({
-    year: "",
-    month: "",
+    useState<CPAReportItem[]>(mockCPAReportItems);
+  const [filters, setFilters] = useState<CPAReportFilterOptions>({
     brand: "",
     trackerId: "",
     username: "",
-    affiliateId: "",
-    affiliate: "",
   });
 
   // Apply filters whenever filters state changes
   useEffect(() => {
     const filtered = items.filter((item) => {
-      // Filter by year
-      if (
-        filters.year &&
-        new Date(item.lastUpdated).getFullYear().toString() !== filters.year
-      ) {
-        return false;
-      }
-
-      // Filter by month
-      if (
-        filters.month &&
-        new Date(item.lastUpdated).getMonth().toString() !== filters.month
-      ) {
-        return false;
-      }
-
       // Filter by brand
       if (filters.brand && item.brand !== filters.brand) {
         return false;
@@ -67,21 +38,17 @@ function GrossReportDashboard() {
         return false;
       }
 
-      // Filter by username (case insensitive)
-      if (
-        filters.username &&
-        !item.username.toLowerCase().includes(filters.username.toLowerCase())
-      ) {
+      // Filter by username
+      if (filters.username && item.username !== filters.username) {
         return false;
       }
 
-      // Filter by affiliate ID
-      if (filters.affiliateId && item.affiliateId !== filters.affiliateId) {
+      // Filter by date range
+      const itemDate = new Date(item.lastUpdated);
+      if (filters.startDate && new Date(filters.startDate) > itemDate) {
         return false;
       }
-
-      // Filter by affiliate name
-      if (filters.affiliate && item.affiliate !== filters.affiliate) {
+      if (filters.endDate && new Date(filters.endDate) < itemDate) {
         return false;
       }
 
@@ -91,19 +58,15 @@ function GrossReportDashboard() {
     setFilteredItems(filtered);
   }, [items, filters]);
 
-  const handleFilterChange = (newFilters: GrossReportFilterOptions) => {
+  const handleFilterChange = (newFilters: CPAReportFilterOptions) => {
     setFilters(newFilters);
   };
 
   const handleResetFilters = () => {
     setFilters({
-      year: "",
-      month: "",
       brand: "",
       trackerId: "",
       username: "",
-      affiliateId: "",
-      affiliate: "",
     });
   };
 
@@ -111,11 +74,11 @@ function GrossReportDashboard() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Gross Report Dashboard
+          CPA Report Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Track and analyze revenue, deductions, and profits across different
-          brands and trackers.
+          Track and analyze CPA counts across different brands, trackers, and
+          users.
         </Typography>
       </Box>
 
@@ -125,19 +88,15 @@ function GrossReportDashboard() {
 
         {/* Filter Bar */}
         <FilterBar
-          years={years}
-          months={months}
           brands={brands}
           trackerIds={trackerIds}
           usernames={usernames}
-          affiliateIds={affiliateIds}
-          affiliateNames={affiliateNames}
           filters={filters}
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
         />
 
-        {/* Gross Report Table */}
+        {/* CPA Report Table */}
         <Paper elevation={0} sx={{ borderRadius: 2 }}>
           <Box
             sx={{
@@ -150,7 +109,7 @@ function GrossReportDashboard() {
             }}
           >
             <Typography variant="h6" fontWeight="medium">
-              Gross Report Items ({filteredItems.length})
+              CPA Report Items ({filteredItems.length})
             </Typography>
             <Button
               variant="outlined"
@@ -161,31 +120,27 @@ function GrossReportDashboard() {
                 const exportData = filteredItems.map((item) => ({
                   brand: item.brand,
                   trackerId: item.trackerId,
-                  deduction: item.deduction,
-                  adminFee: item.adminFee,
                   username: item.username,
-                  affiliate: item.affiliate,
-                  netRevenue: item.netRevenue,
-                  profit: item.profit,
+                  cpaCount: item.cpaCount,
+                  estimatedValue: item.cpaCount * 100, // Assuming $100 per CPA
                   currency: item.currency,
                   lastUpdated: new Date(item.lastUpdated).toLocaleDateString(),
-                  affiliateId: item.affiliateId || "N/A",
                 }));
 
                 exportToExcel(exportData, {
-                  fileName: "Gross_Report",
-                  sheetName: "Gross Report",
+                  fileName: "CPA_Report",
+                  sheetName: "CPA Data",
                 });
               }}
             >
               Export Excel
             </Button>
           </Box>
-          <GrossReportTable items={filteredItems} />
+          <CPAReportTable items={filteredItems} />
         </Paper>
       </Stack>
     </Container>
   );
 }
 
-export default GrossReportDashboard;
+export default CPAReportDashboard;

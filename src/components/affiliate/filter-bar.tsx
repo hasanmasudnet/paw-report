@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { FilterOptions } from "./types";
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   Button,
   Paper,
   Typography,
-  Stack,
   SelectChangeEvent,
   Grid,
   TextField,
@@ -17,17 +16,9 @@ import {
   Slider,
   Chip,
   Tooltip,
-  IconButton,
-  Collapse,
+  Autocomplete,
 } from "@mui/material";
-import {
-  FilterAlt,
-  RestartAlt,
-  Search,
-  ExpandMore,
-  ExpandLess,
-  Info,
-} from "@mui/icons-material";
+import { FilterAlt, RestartAlt, Search, Info } from "@mui/icons-material";
 
 interface FilterBarProps {
   brands: string[];
@@ -48,34 +39,12 @@ export function FilterBar({
   onFilterChange,
   onResetFilters,
 }: FilterBarProps) {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [revenueRange, setRevenueRange] = useState<[number, number]>([
+  const [revenueRange, setRevenueRange] = React.useState<[number, number]>([
     0, 50000,
   ]);
-  const [commissionRateRange, setCommissionRateRange] = useState<
+  const [commissionRateRange, setCommissionRateRange] = React.useState<
     [number, number]
   >([0, 30]);
-
-  const handleBrandChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      brand: event.target.value,
-    });
-  };
-
-  const handleCategoryChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      category: event.target.value,
-    });
-  };
-
-  const handleDealTypeChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      dealType: event.target.value,
-    });
-  };
 
   const handleAffiliateUsernameChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -92,13 +61,6 @@ export function FilterBar({
     onFilterChange({
       ...filters,
       subAffiliateUsername: event.target.value,
-    });
-  };
-
-  const handleAffiliateChange = (event: SelectChangeEvent) => {
-    onFilterChange({
-      ...filters,
-      affiliate: event.target.value,
     });
   };
 
@@ -140,10 +102,6 @@ export function FilterBar({
     });
   };
 
-  const toggleAdvancedFilters = () => {
-    setShowAdvancedFilters(!showAdvancedFilters);
-  };
-
   const getDealTypeChipColor = (dealType: string) => {
     switch (dealType) {
       case "CPA":
@@ -178,40 +136,45 @@ export function FilterBar({
                 Filter Affiliates
               </Typography>
             </Box>
-            <Button
-              variant="text"
-              size="small"
-              onClick={toggleAdvancedFilters}
-              endIcon={showAdvancedFilters ? <ExpandLess /> : <ExpandMore />}
-            >
-              {showAdvancedFilters
-                ? "Hide Advanced Filters"
-                : "Show Advanced Filters"}
-            </Button>
           </Box>
         </Grid>
 
         {/* Dropdown filters */}
         <Grid item xs={12} md={4} lg={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="brand-select-label">Brand</InputLabel>
-            <Select
-              labelId="brand-select-label"
-              id="brand-select"
-              value={filters.brand}
-              label="Brand"
-              onChange={handleBrandChange}
-            >
-              <MenuItem value="">
-                <em>All Brands</em>
-              </MenuItem>
-              {brands.map((brand) => (
-                <MenuItem key={brand} value={brand}>
-                  {brand}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            id="brand-select"
+            options={brands}
+            value={filters.brand || null}
+            onChange={(event, newValue) => {
+              onFilterChange({
+                ...filters,
+                brand: newValue || "",
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Brand"
+                size="small"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <Search fontSize="small" />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            fullWidth
+            freeSolo
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
+          />
         </Grid>
 
         <Grid item xs={12} md={4} lg={3}>
@@ -222,7 +185,12 @@ export function FilterBar({
               id="category-select"
               value={filters.category}
               label="Category"
-              onChange={handleCategoryChange}
+              onChange={(e) =>
+                onFilterChange({
+                  ...filters,
+                  category: e.target.value,
+                })
+              }
             >
               <MenuItem value="">
                 <em>All Categories</em>
@@ -244,7 +212,12 @@ export function FilterBar({
               id="deal-type-select"
               value={filters.dealType}
               label="Deal Type"
-              onChange={handleDealTypeChange}
+              onChange={(e) =>
+                onFilterChange({
+                  ...filters,
+                  dealType: e.target.value,
+                })
+              }
               renderValue={(selected) => (
                 <Chip
                   label={selected}
@@ -318,134 +291,135 @@ export function FilterBar({
           />
         </Grid>
 
+        {/* Affiliate Company Filter */}
+        <Grid item xs={12} md={6} lg={4}>
+          <Autocomplete
+            id="affiliate-select"
+            options={affiliateCompanies}
+            value={filters.affiliate || null}
+            onChange={(event, newValue) => {
+              onFilterChange({
+                ...filters,
+                affiliate: newValue || "",
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Affiliate Company"
+                size="small"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <Search fontSize="small" />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            fullWidth
+            freeSolo
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
+          />
+        </Grid>
+
+        {/* Revenue Range */}
+        <Grid item xs={12} md={6}>
+          <Box display="flex" alignItems="center" mb={1}>
+            <Typography variant="subtitle2" fontWeight="medium">
+              Revenue Range
+            </Typography>
+            <Tooltip title="Filter affiliates by their gross revenue amount">
+              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+            </Tooltip>
+          </Box>
+          <Box sx={{ px: 2 }}>
+            <Slider
+              value={revenueRange}
+              onChange={handleRevenueRangeChange}
+              onChangeCommitted={handleRevenueRangeChangeCommitted}
+              valueLabelDisplay="auto"
+              min={0}
+              max={50000}
+              step={1000}
+              valueLabelFormat={(value) => `${value.toLocaleString()}`}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 1,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                ${revenueRange[0].toLocaleString()}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                ${revenueRange[1].toLocaleString()}
+                {revenueRange[1] === 50000 ? "+" : ""}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+
+        {/* Commission Rate */}
+        <Grid item xs={12} md={6}>
+          <Box display="flex" alignItems="center" mb={1}>
+            <Typography variant="subtitle2" fontWeight="medium">
+              Commission Rate
+            </Typography>
+            <Tooltip title="Filter affiliates by their commission rate percentage">
+              <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+            </Tooltip>
+          </Box>
+          <Box sx={{ px: 2 }}>
+            <Slider
+              value={commissionRateRange}
+              onChange={handleCommissionRateRangeChange}
+              onChangeCommitted={handleCommissionRateRangeChangeCommitted}
+              valueLabelDisplay="auto"
+              min={0}
+              max={30}
+              step={1}
+              valueLabelFormat={(value) => `${value}%`}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 1,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                {commissionRateRange[0]}%
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {commissionRateRange[1]}%
+                {commissionRateRange[1] === 30 ? "+" : ""}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+
         {/* Reset button */}
         <Grid
           item
           xs={12}
-          md={12}
-          lg={4}
-          sx={{ display: "flex", alignItems: "center" }}
+          sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
         >
           <Button
             variant="outlined"
             startIcon={<RestartAlt />}
             onClick={onResetFilters}
-            sx={{ ml: { xs: 0, lg: "auto" }, mt: { xs: 1, md: 0 } }}
           >
             Reset Filters
           </Button>
-        </Grid>
-
-        {/* Affiliate Company Filter */}
-        <Grid item xs={12} md={6} lg={4}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="affiliate-select-label">
-              Affiliate Company
-            </InputLabel>
-            <Select
-              labelId="affiliate-select-label"
-              id="affiliate-select"
-              value={filters.affiliate || ""}
-              label="Affiliate Company"
-              onChange={handleAffiliateChange}
-            >
-              <MenuItem value="">
-                <em>All Affiliate Companies</em>
-              </MenuItem>
-              {affiliateCompanies.map((company) => (
-                <MenuItem key={company} value={company}>
-                  {company}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Advanced filters */}
-        <Grid item xs={12}>
-          <Collapse in={showAdvancedFilters}>
-            <Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      Revenue Range
-                    </Typography>
-                    <Tooltip title="Filter affiliates by their gross revenue amount">
-                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                    </Tooltip>
-                  </Box>
-                  <Box sx={{ px: 2 }}>
-                    <Slider
-                      value={revenueRange}
-                      onChange={handleRevenueRangeChange}
-                      onChangeCommitted={handleRevenueRangeChangeCommitted}
-                      valueLabelDisplay="auto"
-                      min={0}
-                      max={50000}
-                      step={1000}
-                      valueLabelFormat={(value) => `${value.toLocaleString()}`}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        ${revenueRange[0].toLocaleString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        ${revenueRange[1].toLocaleString()}
-                        {revenueRange[1] === 50000 ? "+" : ""}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      Commission Rate
-                    </Typography>
-                    <Tooltip title="Filter affiliates by their commission rate percentage">
-                      <Info fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
-                    </Tooltip>
-                  </Box>
-                  <Box sx={{ px: 2 }}>
-                    <Slider
-                      value={commissionRateRange}
-                      onChange={handleCommissionRateRangeChange}
-                      onChangeCommitted={
-                        handleCommissionRateRangeChangeCommitted
-                      }
-                      valueLabelDisplay="auto"
-                      min={0}
-                      max={30}
-                      step={1}
-                      valueLabelFormat={(value) => `${value}%`}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        {commissionRateRange[0]}%
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {commissionRateRange[1]}%
-                        {commissionRateRange[1] === 30 ? "+" : ""}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </Collapse>
         </Grid>
       </Grid>
     </Paper>
